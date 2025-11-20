@@ -1,0 +1,102 @@
+import * as fs from 'fs';
+
+'use strict';
+
+let ubus = require('ubus').connect();
+
+function readfile(path) {
+    s = fs.readfile(path);
+    return trim(s);
+}
+
+return {
+        "luci.turboacc": {
+                getSystemFeatures: {
+                        call: function() {
+                                boardinfo = ubus.call("system", "board", {});
+                                kernel = boardinfo.kernel;
+
+                                features  = {
+                                        hasIPV6           : fs.access("/proc/net/ipv6_route"),
+                                        hasFLOWOFFLOADING : fs.access("/lib/modules/" + boardinfo.kernel + "/xt_FLOWOFFLOAD.ko") || fs.access("/lib/modules/" + boardinfo.kernel + "/nft_flow_offload.ko"),
+                                        hasFASTCLASSIFIER : fs.access("/lib/modules/" + boardinfo.kernel + "/fast-classifier.ko"),
+                                        hasSHORTCUTFECM   : fs.access("/lib/modules/" + boardinfo.kernel + "/shortcut-fe-cm.ko"),
+                                        hasMEDIATEKHNAT   : fs.access("/lib/modules/" + boardinfo.kernel + "/mtkhnat.ko"),
+                                        hasXTFULLCONENAT  : fs.access("/lib/modules/" + boardinfo.kernel + "/xt_FULLCONENAT.ko"),
+                                        hasNFTFULLCONENAT  : fs.access("/lib/modules/" + boardinfo.kernel + "/nft_fullcone.ko"),
+                                        hasTCPCCA         : readfile("/proc/sys/net/ipv4/tcp_available_congestion_control")
+                                };
+
+                                return features;
+                        }
+                },
+                getFastPathStat: {
+                        call: function() {
+                                fptype = null;
+                                if (fs.access("/sys/module/xt_FLOWOFFLOAD/refcnt") &&
+                                (readfile("/sys/module/xt_FLOWOFFLOAD/refcnt") || "0") != "0") {
+                                        fptype = "Flow offloading (FW3)";
+                                }
+                                else if (fs.access("/sys/module/nft_flow_offload/refcnt") &&
+                                (readfile("/sys/module/nft_flow_offload/refcnt") || "0") != "0") {
+                                        fptype = "Flow offloading (FW4)";
+                                }
+                                else if (fs.stat("/sys/module/fast_classifier")?.type == "dir") {
+                                        fptype = "Fast classifier";
+                                }
+                                else if (fs.stat("/sys/module/shortcut_fe_cm")?.type == "dir") {
+                                        fptype = "Shortcut-FE CM";
+                                }
+                                else if (fs.stat("/sys/module/ecm")?.type == "dir") {
+                                        fptype = "QCA NSS ECM";
+                                }
+                                else if (fs.stat("/sys/kernel/debug/hnat")?.type == "dir") {
+                                        ethernet_hnat = (readfile("/sys/kernel/debug/hnat/hook_toggle") != "enabled") &&
+                                                " / Ethernet HNAT Disabled" || "";
+                                        wireless_hnat = (system("grep -q 'WHNAT=1' '/etc/wireless/mediatek/'*_card*.dat") != 0) &&
+                                                " / Wireless HNAT Disabled" || "";
+                                        if (ethernet_hnat == "" || wireless_hnat == "") {
+                                                fptype = "MediaTek HNAT" + ethernet_hnat + wireless_hnat;
+                                        }
+                                }
+                                
+                                return {
+                                        type: fptype
+                                };
+
+                        }
+                },
+                getFullConeStat: {
+                        call: function() {
+                                fctype = null;
+                                if (fs.access("/sys/module/xt_FULLCONENAT/refcnt") &&
+                                (readfile("/sys/module/xt_FULLCONENAT/refcnt") || "0") != "0") {
+                                        fctype = "xt_FULLCONENAT";
+                                }
+                                else if (fs.access("/sys/module/nft_fullcone/refcnt") &&
+                                (readfile("/sys/module/nft_fullcone/refcnt") || "0") != "0") {
+                                        fctype = "nft_FULLCONENAT";
+                                }
+                                else if (system("iptables -t nat -L zone_wan_postrouting | grep -q fullcone") == 0) {
+                                        fctype = "Boardcom Fullcone";
+                                }
+                                
+                                return {
+                                        type: fctype
+                                };
+
+                        }
+                },
+                getTCPCCAStat: {
+                        call: function() {
+                                ccatype = null;
+                                ccatype = uc(readfile("/proc/sys/net/ipv4/tcp_congestion_control"));
+                                
+                                return {
+                                        type: ccatype
+                                };
+
+                        }
+                }
+        }
+};

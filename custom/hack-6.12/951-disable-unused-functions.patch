@@ -1,0 +1,46 @@
+--- a/net/netfilter/nf_conntrack_ecache.c
++++ b/net/netfilter/nf_conntrack_ecache.c
+@@ -123,8 +123,9 @@
+ 	if (delay >= 0)
+ 		schedule_delayed_work(&cnet->ecache.dwork, delay);
+ }
+ 
++#ifndef CONFIG_NF_CONNTRACK_CHAIN_EVENTS
+ static int __nf_conntrack_eventmask_report(struct nf_conntrack_ecache *e,
+ 					   const u32 events,
+ 					   const u32 missed,
+ 					   const struct nf_ct_event *item)
+@@ -160,8 +161,9 @@
+ 	} while (cmpxchg(&e->missed, old, want) != old);
+ 
+ 	return ret;
+ }
++#endif
+ 
+ int nf_conntrack_eventmask_report(unsigned int events, struct nf_conn *ct,
+ 				  u32 portid, int report)
+ {
+--- a/net/netfilter/nf_conntrack_netlink.c
++++ b/net/netfilter/nf_conntrack_netlink.c
+@@ -3095,8 +3095,9 @@
+ 	nlmsg_cancel(skb, nlh);
+ 	return -1;
+ }
+ 
++#ifndef CONFIG_NF_CONNTRACK_CHAIN_EVENTS
+ #ifdef CONFIG_NF_CONNTRACK_EVENTS
+ static int
+ ctnetlink_expect_event(unsigned int events, const struct nf_exp_event *item)
+ {
+@@ -3145,8 +3146,9 @@
+ 	nfnetlink_set_err(net, 0, 0, -ENOBUFS);
+ 	return 0;
+ }
+ #endif
++#endif
+ static int ctnetlink_exp_done(struct netlink_callback *cb)
+ {
+ 	if (cb->args[1])
+ 		nf_ct_expect_put((struct nf_conntrack_expect *)cb->args[1]);
+
+	

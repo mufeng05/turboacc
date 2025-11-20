@@ -1,0 +1,75 @@
+--- a/extensions/libxt_NAT.c
++++ b/extensions/libxt_NAT.c
+@@ -38,8 +38,9 @@
+ 	O_TO_DEST = 0,
+ 	O_TO_SRC,
+ 	O_TO_PORTS,
+ 	O_RANDOM,
++	O_MODE,
+ 	O_RANDOM_FULLY,
+ 	O_PERSISTENT,
+ };
+ 
+@@ -60,9 +61,11 @@
+ "				Port (range) to map to.\n"
+ " --random\n"
+ "				Randomize source port.\n"
+ " --random-fully\n"
+-"				Fully randomize source port.\n");
++"				Fully randomize source port.\n"
++" --mode <fullcone|symmetric>\n"
++"				NAT mode.\n");
+ }
+ 
+ static void DNAT_help(void)
+ {
+@@ -103,8 +106,9 @@
+ static const struct xt_option_entry MASQUERADE_opts[] = {
+ 	{.name = "to-ports", .id = O_TO_PORTS, .type = XTTYPE_STRING},
+ 	{.name = "random", .id = O_RANDOM, .type = XTTYPE_NONE},
+ 	{.name = "random-fully", .id = O_RANDOM_FULLY, .type = XTTYPE_NONE},
++	{.name = "mode", .id = O_MODE, .type = XTTYPE_STRING},
+ 	XTOPT_TABLEEND,
+ };
+ 
+ static const struct xt_option_entry DNAT_opts[] = {
+@@ -288,8 +292,10 @@
+ 	struct nf_nat_ipv4_multi_range_compat *mr = (void *)cb->data;
+ 	const struct ipt_entry *entry = cb->xt_entry;
+ 	struct nf_nat_range2 range = {};
+ 
++	mr->range[0].min_ip = 0;
++
+ 	__NAT_parse(cb, entry->ip.proto, &range, AF_INET);
+ 
+ 	switch (cb->entry->id) {
+ 	case O_TO_DEST:
+@@ -305,8 +311,17 @@
+ 	case O_RANDOM:
+ 	case O_RANDOM_FULLY:
+ 		mr->range->flags |= range.flags;
+ 		break;
++	case O_MODE:
++		if (strcasecmp(cb->arg, "fullcone") == 0)
++			mr->range[0].min_ip = 1;
++		else if (strcasecmp(cb->arg, "symmetric") == 0)
++			mr->range[0].min_ip = 0;
++		else
++			xtables_error(PARAMETER_PROBLEM,
++				   "Unknown mode %s", cb->arg);
++		break;
+ 	}
+ }
+ 
+ static void NAT_parse6(struct xt_option_call *cb)
+@@ -408,8 +423,10 @@
+ 	if (r->flags & NF_NAT_RANGE_PROTO_RANDOM)
+ 		printf(" %srandom", flag_pfx);
+ 	if (r->flags & NF_NAT_RANGE_PROTO_RANDOM_FULLY)
+ 		printf(" %srandom-fully", flag_pfx);
++	if (r->min_addr.ip == 1)
++		printf(" mode: fullcone");
+ 	if (r->flags & NF_NAT_RANGE_PERSISTENT)
+ 		printf(" %spersistent", flag_pfx);
+ }
+ 

@@ -1,0 +1,65 @@
+name: Check TurboACC Updates
+on:
+  schedule:
+    - cron: '0 23 * * *'
+  repository_dispatch:
+  workflow_dispatch:
+jobs:
+    check:
+        outputs:
+            test: ${{ steps.diff.outputs.test }}
+        runs-on: ubuntu-22.04
+        steps:
+        - name: 设置时区建立工作文件夹
+          run: |
+            sudo timedatectl set-timezone "Asia/Shanghai"
+            mkdir -p compare/original compare/new clone
+            export COMPARE_PATH="$(pwd)/compare"
+            export CLONE_PATH="$(pwd)/clone"
+            echo "COMPARE_PATH=$COMPARE_PATH" >> $GITHUB_ENV
+            echo "CLONE_PATH=$CLONE_PATH" >> $GITHUB_ENV
+            mkdir -p $COMPARE_PATH/new/patches/firewall/patches $COMPARE_PATH/new/patches/firewall4/patches $COMPARE_PATH/new/patches/iptables/patches $COMPARE_PATH/new/patches/libnftnl/patches $COMPARE_PATH/new/patches/nftables/patches
+            mkdir -p $COMPARE_PATH/new/hack-6.6 $COMPARE_PATH/new/hack-6.12 $COMPARE_PATH/new/pending-6.6 $COMPARE_PATH/new/pending-6.12
+
+        - name: 克隆
+          run: |
+            git clone --depth=1 --single-branch https://github.com/coolsnowwolf/lede $CLONE_PATH/lede
+            git clone --depth=1 --single-branch -b "openwrt-23.05" https://github.com/coolsnowwolf/luci $CLONE_PATH/luci
+            git clone --depth=1 https://github.com/mufeng05/turboacc $CLONE_PATH/turboacc
+
+        - name: 整理
+          run: |
+            cp -r $CLONE_PATH/turboacc/lede/* $COMPARE_PATH/original/
+            cp -r $CLONE_PATH/lede/package/network/services/fullconenat $COMPARE_PATH/new/
+            cp -r $CLONE_PATH/lede/package/network/services/fullconenat-nft $COMPARE_PATH/new/
+            cp $CLONE_PATH/lede/target/linux/generic/hack-6.6/952-add-net-conntrack-events-support-multiple-registrant.patch $COMPARE_PATH/new/hack-6.6/
+            cp $CLONE_PATH/lede/target/linux/generic/hack-6.6/953-net-patch-linux-kernel-to-support-shortcut-fe.patch $COMPARE_PATH/new/hack-6.6/
+            cp $CLONE_PATH/lede/target/linux/generic/hack-6.6/982-add-bcm-fullconenat-support.patch $COMPARE_PATH/new/hack-6.6/
+            cp $CLONE_PATH/lede/target/linux/generic/hack-6.6/983-add-bcm-fullconenat-to-nft.patch $COMPARE_PATH/new/hack-6.6/
+            cp $CLONE_PATH/lede/target/linux/generic/hack-6.12/952-add-net-conntrack-events-support-multiple-registrant.patch $COMPARE_PATH/new/hack-6.12/
+            cp $CLONE_PATH/lede/target/linux/generic/hack-6.12/953-net-patch-linux-kernel-to-support-shortcut-fe.patch $COMPARE_PATH/new/hack-6.12/
+            cp $CLONE_PATH/lede/target/linux/generic/hack-6.12/982-add-bcm-fullconenat-support.patch $COMPARE_PATH/new/hack-6.12/
+            cp $CLONE_PATH/lede/target/linux/generic/hack-6.12/983-add-bcm-fullconenat-to-nft.patch $COMPARE_PATH/new/hack-6.12/
+            cp -r $CLONE_PATH/luci/applications/luci-app-turboacc $COMPARE_PATH/new/
+            cp $CLONE_PATH/lede/package/network/config/firewall/patches/100-fullconenat.patch $COMPARE_PATH/new/patches/firewall/patches/
+            cp $CLONE_PATH/lede/package/network/config/firewall/patches/101-bcm-fullconenat.patch $COMPARE_PATH/new/patches/firewall/patches/
+            cp $CLONE_PATH/lede/package/network/config/firewall4/patches/001-firewall4-add-support-for-fullcone-nat.patch $COMPARE_PATH/new/patches/firewall4/patches/
+            cp $CLONE_PATH/lede/package/network/utils/iptables/patches/900-bcm-fullconenat.patch $COMPARE_PATH/new/patches/iptables/patches/
+            cp $CLONE_PATH/lede/package/libs/libnftnl/patches/001-libnftnl-add-fullcone-expression-support.patch $COMPARE_PATH/new/patches/libnftnl/patches/
+            cp $CLONE_PATH/lede/package/network/utils/nftables/patches/002-nftables-add-fullcone-expression-support.patch $COMPARE_PATH/new/patches/nftables/patches/
+            cp $CLONE_PATH/lede/target/linux/generic/pending-6.6/613-netfilter_optional_tcp_window_check.patch $COMPARE_PATH/new/pending-6.6/
+            cp $CLONE_PATH/lede/target/linux/generic/pending-6.12/613-netfilter_optional_tcp_window_check.patch $COMPARE_PATH/new/pending-6.12/
+            cp -r $CLONE_PATH/lede/package/qca/shortcut-fe $COMPARE_PATH/new/
+
+        - name: 对比
+          id: diff
+          run: |
+            DIFF_OUTPUT=$(diff -ruN "$COMPARE_PATH/original/" "$COMPARE_PATH/new/" || true)
+
+            if [ -z "$DIFF_OUTPUT" ]; then
+                echo "两个目录完全相同。"
+            else
+                echo "两个目录存在差异："
+                echo "$DIFF_OUTPUT"
+                exit 1
+            fi
