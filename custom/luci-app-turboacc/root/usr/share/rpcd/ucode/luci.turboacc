@@ -41,16 +41,16 @@ return {
                                 (readfile("/sys/module/nft_flow_offload/refcnt") || "0") != "0") {
                                         fptype = "Flow offloading (FW4)";
                                 }
-                                else if (fs.stat("/sys/module/fast_classifier")?.type == "dir") {
+                                else if (fs.stat("/sys/module/fast_classifier")?.type == "directory") {
                                         fptype = "Fast classifier";
                                 }
-                                else if (fs.stat("/sys/module/shortcut_fe_cm")?.type == "dir") {
+                                else if (fs.stat("/sys/module/shortcut_fe_cm")?.type == "directory") {
                                         fptype = "Shortcut-FE CM";
                                 }
-                                else if (fs.stat("/sys/module/ecm")?.type == "dir") {
+                                else if (fs.stat("/sys/module/ecm")?.type == "directory") {
                                         fptype = "QCA NSS ECM";
                                 }
-                                else if (fs.stat("/sys/kernel/debug/hnat")?.type == "dir") {
+                                else if (fs.stat("/sys/kernel/debug/hnat")?.type == "directory") {
                                         ethernet_hnat = (readfile("/sys/kernel/debug/hnat/hook_toggle") != "enabled") &&
                                                 " / Ethernet HNAT Disabled" || "";
                                         wireless_hnat = (system("grep -q 'WHNAT=1' '/etc/wireless/mediatek/'*_card*.dat") != 0) &&
