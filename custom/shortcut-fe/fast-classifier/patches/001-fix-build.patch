@@ -1,5 +1,5 @@
---- a/src/fast-classifier.c
-+++ b/src/fast-classifier.c
+--- a/fast-classifier.c
++++ b/fast-classifier.c
 @@ -216,9 +216,9 @@
   *	Handle packet receives.
   *
