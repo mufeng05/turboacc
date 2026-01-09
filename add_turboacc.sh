@@ -9,7 +9,10 @@ if ! [ -d "./package" ]; then
     exit 1
 fi
 
-kernel_versions="$(find "./target/linux/generic" | sed -n '/kernel-[0-9]/p' | sed -e "s@./target/linux/generic/kernel-@@" | sed ':a;N;$!ba;s/\n/ /g')"
+kernel_versions="$(find "./include" | sed -n '/kernel-[0-9]/p' | sed -e "s@./include/kernel-@@" | sed ':a;N;$!ba;s/\n/ /g')"
+if [ -z "$kernel_versions" ]; then
+    kernel_versions="$(find "./target/linux/generic" | sed -n '/kernel-[0-9]/p' | sed -e "s@./target/linux/generic/kernel-@@" | sed ':a;N;$!ba;s/\n/ /g')"
+fi
 if [ -z "$kernel_versions" ]; then
     echo "Error: Unable to get kernel version, script exited"
     exit 1
