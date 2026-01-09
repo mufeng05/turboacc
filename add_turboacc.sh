@@ -59,6 +59,7 @@ echo "Applying custom patches..."
 
 mkdir -p "./package/turboacc/luci-app-turboacc/root/usr/share/rpcd/ucode"
 mkdir -p "./package/turboacc/luci-app-turboacc/root/usr/share/ucitrack"
+mkdir -p "./package/turboacc/shortcut-fe/fast-classifier/patches"
 
 for kernel_version in $kernel_versions; do
     cp -f "$TMPDIR/turboacc/custom/hack-$kernel_version/951-disable-unused-functions.patch" "./target/linux/generic/hack-$kernel_version"
@@ -73,6 +74,7 @@ cp -f "$TMPDIR/turboacc/custom/fullconenat/Makefile" "./package/turboacc/fullcon
 cp -f "$TMPDIR/turboacc/custom/fullconenat-nft/Makefile" "./package/turboacc/fullconenat-nft/"
 
 cp -f "$TMPDIR/turboacc/custom/patches/iptables/patches/900-bcm-fullconenat.patch" "./package/network/utils/iptables/patches/"
+cp -f "$TMPDIR/turboacc/custom/shortcut-fe/fast-classifier/patches/001-fix-build.patch" "./package/turboacc/shortcut-fe/fast-classifier/patches/"
 
 echo "Finish"
 exit 0

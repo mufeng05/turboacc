@@ -1,0 +1,33 @@
+--- a/src/fast-classifier.c
++++ b/src/fast-classifier.c
+@@ -216,9 +216,9 @@
+  *	Handle packet receives.
+  *
+  * Returns 1 if the packet is forwarded or 0 if it isn't.
+  */
+-int fast_classifier_recv(struct sk_buff *skb)
++static int fast_classifier_recv(struct sk_buff *skb)
+ {
+ 	struct net_device *dev;
+ 	struct net_device *master_dev = NULL;
+ 	int ret = 0;
+@@ -1488,17 +1488,17 @@
+ 		struct rtnl_link_stats64 nlstats;
+ 		nlstats.tx_packets = 0;
+ 		nlstats.tx_bytes = 0;
+ 
+-		if (sis->src_dev && IFF_EBRIDGE &&
++		if (sis->src_dev && (sis->src_dev->flags & IFF_EBRIDGE) &&
+ 		    (sis->src_new_packet_count || sis->src_new_byte_count)) {
+ 			nlstats.rx_packets = sis->src_new_packet_count;
+ 			nlstats.rx_bytes = sis->src_new_byte_count;
+ 			spin_lock_bh(&sfe_connections_lock);
+ 			br_dev_update_stats(sis->src_dev, &nlstats);
+ 			spin_unlock_bh(&sfe_connections_lock);
+ 		}
+-		if (sis->dest_dev && IFF_EBRIDGE &&
++		if (sis->dest_dev && (sis->dest_dev->flags & IFF_EBRIDGE) &&
+ 		    (sis->dest_new_packet_count || sis->dest_new_byte_count)) {
+ 			nlstats.rx_packets = sis->dest_new_packet_count;
+ 			nlstats.rx_bytes = sis->dest_new_byte_count;
+ 			spin_lock_bh(&sfe_connections_lock);
