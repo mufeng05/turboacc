@@ -19,7 +19,7 @@ jobs:
             echo "COMPARE_PATH=$COMPARE_PATH" >> $GITHUB_ENV
             echo "CLONE_PATH=$CLONE_PATH" >> $GITHUB_ENV
             mkdir -p $COMPARE_PATH/new/patches/firewall/patches $COMPARE_PATH/new/patches/firewall4/patches $COMPARE_PATH/new/patches/iptables/patches $COMPARE_PATH/new/patches/libnftnl/patches $COMPARE_PATH/new/patches/nftables/patches
-            mkdir -p $COMPARE_PATH/new/hack-6.6 $COMPARE_PATH/new/hack-6.12 $COMPARE_PATH/new/pending-6.6 $COMPARE_PATH/new/pending-6.12
+            mkdir -p $COMPARE_PATH/new/hack-6.6 $COMPARE_PATH/new/hack-6.12 $COMPARE_PATH/new/hack-6.18 $COMPARE_PATH/new/pending-6.6 $COMPARE_PATH/new/pending-6.12
 
         - name: 克隆
           run: |
@@ -40,6 +40,9 @@ jobs:
             cp $CLONE_PATH/lede/target/linux/generic/hack-6.12/953-net-patch-linux-kernel-to-support-shortcut-fe.patch $COMPARE_PATH/new/hack-6.12/
             cp $CLONE_PATH/lede/target/linux/generic/hack-6.12/982-add-bcm-fullconenat-support.patch $COMPARE_PATH/new/hack-6.12/
             cp $CLONE_PATH/lede/target/linux/generic/hack-6.12/983-add-bcm-fullconenat-to-nft.patch $COMPARE_PATH/new/hack-6.12/
+            cp $CLONE_PATH/lede/target/linux/generic/hack-6.18/952-add-net-conntrack-events-support-multiple-registrant.patch $COMPARE_PATH/new/hack-6.18/
+            cp $CLONE_PATH/lede/target/linux/generic/hack-6.18/953-net-patch-linux-kernel-to-support-shortcut-fe.patch $COMPARE_PATH/new/hack-6.18/
+            cp $CLONE_PATH/lede/target/linux/generic/hack-6.18/982-add-bcm-fullconenat-support.patch $COMPARE_PATH/new/hack-6.18/
             cp -r $CLONE_PATH/luci/applications/luci-app-turboacc $COMPARE_PATH/new/
             cp $CLONE_PATH/lede/package/network/config/firewall/patches/100-fullconenat.patch $COMPARE_PATH/new/patches/firewall/patches/
             cp $CLONE_PATH/lede/package/network/config/firewall/patches/101-bcm-fullconenat.patch $COMPARE_PATH/new/patches/firewall/patches/
