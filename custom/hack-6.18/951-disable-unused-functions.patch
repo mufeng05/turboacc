@@ -19,6 +19,7 @@
  
  static void nf_ct_ecache_tstamp_refresh(struct nf_conntrack_ecache *e)
  {
+ #ifdef CONFIG_NF_CONNTRACK_TIMESTAMP
 --- a/net/netfilter/nf_conntrack_netlink.c
 +++ b/net/netfilter/nf_conntrack_netlink.c
 @@ -3100,8 +3100,9 @@
@@ -30,6 +31,7 @@
  #ifdef CONFIG_NF_CONNTRACK_EVENTS
  static int
  ctnetlink_expect_event(unsigned int events, const struct nf_exp_event *item)
+ {
 @@ -3150,8 +3151,9 @@
  	nfnetlink_set_err(net, 0, 0, -ENOBUFS);
  	return 0;
@@ -39,3 +41,4 @@
  
  static unsigned long ctnetlink_exp_id(const struct nf_conntrack_expect *exp)
  {
+ 	unsigned long id = (unsigned long)exp;
