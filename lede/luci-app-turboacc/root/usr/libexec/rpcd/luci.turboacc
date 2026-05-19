@@ -139,6 +139,13 @@ local function parseInput()
 	return parse:get()
 end
 
+local function sanitizeShellArg(v)
+	if type(v) == "string" then
+		return v:gsub("[;|&`$<>%(%)!\\\"']", "")
+	end
+	return v
+end
+
 local function validateArgs(func, uargs)
 	local method = methods[func]
 	if not method then
@@ -161,6 +168,9 @@ local function validateArgs(func, uargs)
 		then
 			print(json.stringify({ error = "Invalid arguments" }))
 			os.exit(1)
+		end
+		if type(v) == "string" then
+			uargs[k] = sanitizeShellArg(v)
 		end
 	end
 
