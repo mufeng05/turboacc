@@ -25,8 +25,8 @@ jobs:
       - name: 检出本仓库
         uses: actions/checkout@v4
 
-      - name: 忽略文件权限位差异（与上游内容对比保持一致）
-        run: git config core.fileMode false
+      - name: 启用文件权限位比对（mode 也随上游同步）
+        run: git config core.fileMode true
 
       - name: 克隆上游仓库
         run: |
@@ -45,17 +45,17 @@ jobs:
           LEDE="$CLONE_PATH/lede"
           LUCI="$CLONE_PATH/luci"
 
-          # 整包目录：先删后拷，完全镜像上游（包含上游的删除）
+          # 整包目录：先删后拷，完全镜像上游（含上游的删除与文件权限位）
           sync_dir() {
             if [ ! -d "$1" ]; then echo "::error::缺少上游目录: $1"; exit 1; fi
             rm -rf "${DEST:?}/$2"
-            cp -r "$1" "$DEST/$2"
+            cp -r --preserve=mode "$1" "$DEST/$2"
           }
-          # 单个文件：覆盖
+          # 单个文件：覆盖内容并同步权限位
           sync_file() {
             if [ ! -f "$1" ]; then echo "::error::缺少上游文件: $1"; exit 1; fi
             mkdir -p "$DEST/$(dirname "$2")"
-            cp -f "$1" "$DEST/$2"
+            cp -f --preserve=mode "$1" "$DEST/$2"
           }
 
           sync_dir "$LEDE/package/network/services/fullconenat"     "fullconenat"
