@@ -25,6 +25,9 @@ jobs:
       - name: 检出本仓库
         uses: actions/checkout@v4
 
+      - name: 忽略文件权限位差异（与上游内容对比保持一致）
+        run: git config core.fileMode false
+
       - name: 克隆上游仓库
         run: |
           set -euo pipefail
