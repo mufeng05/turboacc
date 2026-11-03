@@ -1,0 +1,166 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:116
+msgid "Automatically select the acceleration engine in ECM Auto mode."
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:165
+msgid "Bridge Acceleration"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:37
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:87
+msgid "Broadcom Fullcone NAT1"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:147
+msgid ""
+"Cannot be used together with flow offloading, only available when the flow "
+"offloading type is None."
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:85
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:153
+msgid "Disable"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:38
+msgid "Disabled"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:84
+msgid "Enable FullCone NAT"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:90
+msgid "Enable FullCone NAT6"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:173
+msgid "Enable IPv6 Acceleration."
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:166
+msgid ""
+"Enable bridge acceleration (may be functional conflict with bridge-mode VPN "
+"server)."
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:86
+msgid "FULLCONENAT"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:155
+msgid "Fast classifier"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:156
+msgid "Fast classifier connection manager for the shortcut forwarding engine."
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:152
+msgid "Fastpath engine"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:107
+msgid "Flow offloading type"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:79
+msgctxt "TurboACC"
+msgid "General Settings"
+msgstr ""
+
+#: applications/luci-app-turboacc/root/usr/share/rpcd/acl.d/luci-app-turboacc.json:3
+msgid "Grant UCI access for luci-app-turboacc"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:114
+msgid "Hardware NAT offloading using the MediaTek vendor driver."
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:112
+msgid "Hardware based offloading for routing with/without NAT."
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:112
+msgid "Hardware flow offloading"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:172
+msgid "IPv6 acceleration"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:114
+msgid "MediaTek HNAT"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:108
+msgid "None"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:102
+msgid "Not fully compatible with QoS/SQM."
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:72
+msgid "Open source flow offloading engine (fast path or hardware NAT)."
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:116
+msgid "Qualcomm NSS ECM acceleration"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:112
+msgid "Requires hardware NAT support."
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:101
+msgid "Routing/NAT Offloading"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:46
+msgid "Running status: %s, TCP congestion control algorithm is %s"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:158
+msgid "SFE connection manager"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:146
+msgid "Shortcut-FE"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:159
+msgid "Simple connection manager for the shortcut forwarding engine."
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:110
+msgid "Software based offloading for routing/NAT."
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:110
+msgid "Software flow offloading"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:49
+msgid "TCP CCA"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:50
+msgid "TCP congestion control algorithm."
+msgstr ""
+
+#: applications/luci-app-turboacc/root/usr/share/luci/menu.d/luci-app-turboacc.json:3
+msgid "TurboACC"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:71
+msgid "TurboACC settings"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:40
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:43
+msgid "Unknown"
+msgstr ""

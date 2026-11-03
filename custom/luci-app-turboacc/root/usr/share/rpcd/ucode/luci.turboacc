@@ -20,14 +20,24 @@ function has_mtkwed_module(kernel) {
     return false;
 }
 
-function get_mtkwed_param() {
-    for (let mod in mtk_wed_modules) {
-        path = "/sys/module/" + mod + "/parameters/wed_enable";
-        if (fs.access(path)) {
-            return readfile(path);
-        }
-    }
-    return null;
+// Same as the offloading_hw feature of the lede luci-base
+function has_supported_hw_offloading_target(target) {
+    if (target == "ipq40xx/generic")
+        return fs.access("/sys/module/qca_ssdk") == true &&
+            fs.access("/sys/module/essedma") == true;
+
+    return type(target) == "string" &&
+        match(target, /^(ramips\/mt7621|mediatek\/mt76..|mediatek\/filogic|airoha\/an758[0-9])$/) != null;
+}
+
+function has_hw_flow_offloading(target) {
+    let has_fw3 = fs.access("/sbin/fw3") == true;
+    let has_fw4 = fs.access("/sbin/fw4") == true || fs.access("/usr/sbin/fw4") == true;
+    let has_mt7621_vendor_hnat = target == "ramips/mt7621" && fs.access("/sys/module/mtkhnat") == true;
+
+    return !has_mt7621_vendor_hnat && has_supported_hw_offloading_target(target) &&
+        ((has_fw3 && fs.access("/sys/module/xt_FLOWOFFLOAD/refcnt") == true) ||
+         (has_fw4 && fs.access("/sys/module/nft_flow_offload/refcnt") == true));
 }
 
 return {
@@ -40,6 +50,7 @@ return {
                                 features  = {
                                         hasIPV6           : fs.access("/proc/net/ipv6_route"),
                                         hasFLOWOFFLOADING : fs.access("/lib/modules/" + boardinfo.kernel + "/xt_FLOWOFFLOAD.ko") || fs.access("/lib/modules/" + boardinfo.kernel + "/nft_flow_offload.ko"),
+                                        hasHWFLOWOFFLOADING : has_hw_flow_offloading(boardinfo.release?.target),
                                         hasFASTCLASSIFIER : fs.access("/lib/modules/" + boardinfo.kernel + "/fast-classifier.ko"),
                                         hasSHORTCUTFECM   : fs.access("/lib/modules/" + boardinfo.kernel + "/shortcut-fe-cm.ko"),
                                         hasNSSECM         : fs.access("/etc/init.d/qca-nss-ecm"),
@@ -51,85 +62,6 @@ return {
                                 };
 
                                 return features;
-                        }
-                },
-                getFastPathStat: {
-                        call: function() {
-                                fptype = null;
-                                if (fs.access("/sys/module/xt_FLOWOFFLOAD/refcnt") &&
-                                (readfile("/sys/module/xt_FLOWOFFLOAD/refcnt") || "0") != "0") {
-                                        fptype = "Flow offloading (FW3)";
-                                }
-                                else if (fs.access("/sys/module/nft_flow_offload/refcnt") &&
-                                (readfile("/sys/module/nft_flow_offload/refcnt") || "0") != "0") {
-                                        fptype = "Flow offloading (FW4)";
-                                }
-                                else if (fs.stat("/sys/module/fast_classifier")?.type == "directory") {
-                                        fptype = "Fast classifier";
-                                }
-                                else if (fs.stat("/sys/module/shortcut_fe_cm")?.type == "directory") {
-                                        fptype = "Shortcut-FE CM";
-                                }
-                                else if (fs.stat("/sys/module/ecm")?.type == "directory") {
-                                        fptype = "QCA NSS ECM";
-                                }
-                                else if (fs.stat("/sys/kernel/debug/hnat")?.type == "directory") {
-                                        ethernet_hnat = (readfile("/sys/kernel/debug/hnat/hook_toggle") != "enabled") &&
-                                                " / Ethernet HNAT Disabled" || "";
-                                        wireless_hnat = "";
-                                        wed_enabled = get_mtkwed_param();
-                                        if (wed_enabled != null) {
-                                                wireless_hnat = (wed_enabled == "Y" || wed_enabled == "1") ? "" :
-                                                        " / Wireless HNAT Disabled";
-                                        }
-                                        else {
-                                                wireless_hnat = (system("grep -q 'WHNAT=1' '/etc/wireless/mediatek/'*_card*.dat") != 0) &&
-                                                        " / Wireless HNAT Disabled" || "";
-                                        }
-                                        if (ethernet_hnat == "" || wireless_hnat == "") {
-                                                fptype = "MediaTek HNAT" + ethernet_hnat + wireless_hnat;
-                                        }
-                                }
-
-                                return {
-                                        type: fptype
-                                };
-
-                        }
-                },
-                getFullConeStat: {
-                        call: function() {
-                                fctype = null;
-                                if (fs.access("/sys/module/xt_FULLCONENAT/refcnt") &&
-                                (readfile("/sys/module/xt_FULLCONENAT/refcnt") || "0") != "0") {
-                                        fctype = "xt_FULLCONENAT";
-                                }
-                                else if (fs.access("/sys/module/nft_fullcone/refcnt") &&
-                                (readfile("/sys/module/nft_fullcone/refcnt") || "0") != "0") {
-                                        fctype = "nft_FULLCONENAT";
-                                }
-                                else if (system("nft list ruleset 2>/dev/null | grep -q 'masquerade fullcone'") == 0) {
-                                        fctype = "Boardcom Fullcone NAT1";
-                                }
-                                else if (system("iptables -t nat -L zone_wan_postrouting | grep -q fullcone") == 0) {
-                                        fctype = "Boardcom Fullcone NAT1";
-                                }
-
-                                return {
-                                        type: fctype
-                                };
-
-                        }
-                },
-                getTCPCCAStat: {
-                        call: function() {
-                                ccatype = null;
-                                ccatype = uc(readfile("/proc/sys/net/ipv4/tcp_congestion_control"));
-
-                                return {
-                                        type: ccatype
-                                };
-
                         }
                 }
         }

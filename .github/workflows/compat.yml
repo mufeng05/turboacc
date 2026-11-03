@@ -1,0 +1,30 @@
+name: 检查补丁兼容性
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # 每天检查一次：官方 OpenWrt 升级内核或 firewall4、nftables 等软件包后，补丁可能打不上
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: OpenWrt ${{ matrix.branch }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [main, openwrt-25.12, openwrt-24.10]
+    steps:
+      - name: 设置时区
+        run: sudo timedatectl set-timezone "Asia/Shanghai"
+
+      - name: 检出本仓库
+        uses: actions/checkout@v7
+
+      - name: 把补丁打到官方源码上
+        run: bash .github/scripts/check_patches.sh "${{ matrix.branch }}" "$RUNNER_TEMP/compat"

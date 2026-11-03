@@ -1,0 +1,65 @@
+msgid "Automatically select the acceleration engine in ECM Auto mode."
+msgstr "在 ECM Auto 模式下自动选择加速引擎。"
+
+msgid "Broadcom Fullcone NAT1"
+msgstr "Broadcom Fullcone NAT1"
+
+msgid "Disabled"
+msgstr "已禁用"
+
+msgid "Enable FullCone NAT"
+msgstr "启用 FullCone NAT"
+
+msgid "Enable FullCone NAT6"
+msgstr "启用 FullCone NAT6"
+
+msgid "Flow offloading type"
+msgstr "流量卸载类型"
+
+msgid "General Settings"
+msgstr "常规设置"
+
+msgid "Hardware NAT offloading using the MediaTek vendor driver."
+msgstr "使用 MediaTek 原厂驱动的硬件 NAT 卸载。"
+
+msgid "Hardware based offloading for routing with/without NAT."
+msgstr "基于硬件的流量卸载，可能支持 NAT。"
+
+msgid "Hardware flow offloading"
+msgstr "硬件流量卸载"
+
+msgid "MediaTek HNAT"
+msgstr "MediaTek HNAT"
+
+msgid "None"
+msgstr "无"
+
+msgid "Not fully compatible with QoS/SQM."
+msgstr "与 QoS/SQM 不完全兼容。"
+
+msgid "Qualcomm NSS ECM acceleration"
+msgstr "Qualcomm NSS ECM 加速"
+
+msgid "Requires hardware NAT support."
+msgstr "需要硬件 NAT 支持。"
+
+msgid "Routing/NAT Offloading"
+msgstr "路由/NAT 卸载"
+
+msgid "Running status: %s, TCP congestion control algorithm is %s"
+msgstr "当前NAT1状态：%s，TCP 拥塞控制算法为 %s"
+
+msgid "Software based offloading for routing/NAT."
+msgstr "基于软件的路由/NAT卸载。"
+
+msgid "Software flow offloading"
+msgstr "软件流量卸载"
+
+msgid "TCP CCA"
+msgstr "TCP 拥塞控制算法"
+
+msgid "TCP congestion control algorithm."
+msgstr "TCP 拥塞控制算法。"
+
+msgid "Unknown"
+msgstr "未知"

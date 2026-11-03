@@ -1,56 +1,97 @@
 #!/bin/sh
 
-[ "$(uci -q get "turboacc.global.set")" -eq "1" ] && exit 0
-
-cat <<-EOF > "/etc/config/turboacc"
-
-config turboacc 'global'
-	option set '0'
-
-config turboacc 'config'
-	option tcpcca 'bbr'
-
-EOF
+# Full cone NAT, flow offloading and the TCP CCA are kept in the firewall config like in lede,
+# the turboacc config only holds the Shortcut-FE options
 
 kernel_ver="$(uname -r)"
 
-if [ -e "/etc/init.d/qca-nss-ecm" ]; then
-	uci -q set "turboacc.config.fastpath"="qca_nss_ecm"
-elif [ -e "/lib/modules/$kernel_ver/mtkhnat.ko" ]; then
-	uci -q set "turboacc.config.fastpath"="mediatek_hnat"
-	uci -q set "turboacc.config.fastpath_mh_eth_hnat"="1"
-	uci -q set "turboacc.config.fastpath_mh_eth_hnat_v6"="1"
-	uci -q set "turboacc.config.fastpath_mh_eth_hnat_wed"="0"
-elif [ -e "/lib/modules/$kernel_ver/xt_FLOWOFFLOAD.ko" ] || [ -e "/lib/modules/$kernel_ver/nft_flow_offload.ko" ]; then
-	uci -q set "turboacc.config.fastpath"="flow_offloading"
-	if grep -q "mt762" "/etc/openwrt_release"; then
-		uci -q set "turboacc.config.fastpath_fo_hw"="1"
-	else
-		uci -q set "turboacc.config.fastpath_fo_hw"="0"
+if [ "$(uci -q get "turboacc.global.set")" = "1" ]; then
+	# Older versions copied their settings to the firewall config on start, except the TCP CCA and MediaTek HNAT
+	tcpcca="$(uci -q get "turboacc.config.tcpcca")"
+	if [ -n "$tcpcca" ] && [ -z "$(uci -q get "firewall.@defaults[0].tcpcca")" ]; then
+		uci -q set "firewall.@defaults[0].tcpcca"="$tcpcca"
 	fi
-elif [ -e "/lib/modules/$kernel_ver/fast-classifier.ko" ]; then
-	uci -q set "turboacc.config.fastpath"="fast_classifier"
-	uci -q set "turboacc.config.fastpath_fc_br"="1"
-	if [ -d "/proc/sys/net/ipv6" ]; then
-		uci -q set "turboacc.config.fastpath_fc_ipv6"="1"
-	else
-		uci -q set "turboacc.config.fastpath_fc_ipv6"="0"
-	fi
-elif [ -e "/lib/modules/$kernel_ver/shortcut-fe-cm.ko" ]; then
-	uci -q set "turboacc.config.fastpath"="shortcut_fe_cm"
-else
-	uci -q set "turboacc.config.fastpath"="none"
-fi
 
-if [ -e "/lib/modules/$kernel_ver/xt_FULLCONENAT.ko" ] || [ -e "/lib/modules/$kernel_ver/nft_fullcone.ko" ]; then
-	uci -q set "turboacc.config.fullcone"="1"
+	case "$(uci -q get "turboacc.config.fastpath")" in
+	"disabled"|"fast_classifier"|"shortcut_fe_cm")
+		;;
+	"mediatek_hnat")
+		uci -q set "firewall.@defaults[0].flow_offloading"="3"
+		uci -q set "turboacc.config.fastpath"="disabled"
+		;;
+	*)
+		uci -q set "turboacc.config.fastpath"="disabled"
+		;;
+	esac
+
+	for opt in "fastpath_fo_hw" "fastpath_mh_eth_hnat" "fastpath_mh_eth_hnat_v6" "fastpath_mh_eth_hnat_wed" "fullcone" "tcpcca"; do
+		uci -q delete "turboacc.config.$opt"
+	done
 else
-	uci -q set "turboacc.config.fullcone"="0"
+	cat <<-EOF > "/etc/config/turboacc"
+
+	config turboacc 'global'
+		option set '1'
+
+	config turboacc 'config'
+		option fastpath 'disabled'
+
+	EOF
+
+	flow_offloading="0"
+	flow_offloading_hw="0"
+
+	if [ -e "/etc/init.d/qca-nss-ecm" ]; then
+		# NSS ECM is enabled in its own config
+		:
+	elif [ -e "/lib/modules/$kernel_ver/mtkhnat.ko" ]; then
+		flow_offloading="3"
+	elif [ -e "/lib/modules/$kernel_ver/xt_FLOWOFFLOAD.ko" ] || [ -e "/lib/modules/$kernel_ver/nft_flow_offload.ko" ]; then
+		flow_offloading="1"
+		if grep -qE "mt762|^DISTRIB_TARGET=['\"]?airoha/" "/etc/openwrt_release"; then
+			flow_offloading_hw="1"
+		fi
+	elif [ -e "/lib/modules/$kernel_ver/fast-classifier.ko" ]; then
+		uci -q set "turboacc.config.fastpath"="fast_classifier"
+		uci -q set "turboacc.config.fastpath_fc_br"="1"
+		if [ -d "/proc/sys/net/ipv6" ]; then
+			uci -q set "turboacc.config.fastpath_fc_ipv6"="1"
+		else
+			uci -q set "turboacc.config.fastpath_fc_ipv6"="0"
+		fi
+	elif [ -e "/lib/modules/$kernel_ver/shortcut-fe-cm.ko" ]; then
+		uci -q set "turboacc.config.fastpath"="shortcut_fe_cm"
+	fi
+
+	uci -q set "firewall.@defaults[0].flow_offloading"="$flow_offloading"
+	if [ "$flow_offloading_hw" = "1" ]; then
+		uci -q set "firewall.@defaults[0].flow_offloading_hw"="1"
+	else
+		uci -q delete "firewall.@defaults[0].flow_offloading_hw"
+	fi
+
+	if [ -e "/lib/modules/$kernel_ver/xt_FULLCONENAT.ko" ] || [ -e "/lib/modules/$kernel_ver/nft_fullcone.ko" ]; then
+		uci -q set "firewall.@defaults[0].fullcone"="1"
+	else
+		uci -q set "firewall.@defaults[0].fullcone"="0"
+	fi
+
+	if grep -qw "bbr" "/proc/sys/net/ipv4/tcp_available_congestion_control" || [ -e "/lib/modules/$kernel_ver/tcp_bbr.ko" ]; then
+		uci -q set "firewall.@defaults[0].tcpcca"="bbr"
+	else
+		uci -q set "firewall.@defaults[0].tcpcca"="cubic"
+	fi
 fi
 
 uci -q commit "turboacc"
+uci -q commit "firewall"
 
 /etc/init.d/turboacc enable >/dev/null 2>&1
 /etc/init.d/turboacc start >/dev/null 2>&1
+
+# Installed on a running system, load the new firewall settings now
+if ubus call service list '{ "name": "firewall" }' 2>/dev/null | grep -q '"firewall"'; then
+	/etc/init.d/firewall reload >/dev/null 2>&1
+fi
 
 exit 0

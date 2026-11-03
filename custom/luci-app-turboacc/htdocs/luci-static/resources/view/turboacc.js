@@ -14,227 +14,187 @@ var getSystemFeatures = rpc.declare({
 	expect: { '': {} }
 });
 
-var getFastPathStat = rpc.declare({
-	object: 'luci.turboacc',
-	method: 'getFastPathStat',
-	expect: { '': {} }
-});
-
-var getFullConeStat = rpc.declare({
-	object: 'luci.turboacc',
-	method: 'getFullConeStat',
-	expect: { '': {} }
-});
-
-var getTCPCCAStat = rpc.declare({
-	object: 'luci.turboacc',
-	method: 'getTCPCCAStat',
-	expect: { '': {} }
-});
-
-var callInitAction = rpc.declare({
-	object: 'luci',
-	method: 'setInitAction',
-	params: [ 'name', 'action' ],
-	expect: { result: false }
-});
-
-function getServiceStatus() {
-	return Promise.all([
-		L.resolveDefault(getFastPathStat(), {}),
-		L.resolveDefault(getFullConeStat(), {}),
-		L.resolveDefault(getTCPCCAStat(), {})
-	]);
-}
-
-function renderStatus(stats) {
-	var spanTemp = '<em><span style="color:%s"><strong>%s</strong></span></em>';
-	var renderHTML = [];
-	for (var stat of stats)
-		if (stat.type) {
-			if (stat.type.includes(' / ')) {
-				var types = stat.type.split(' / ');
-				var inner = spanTemp.format('green', types[0]);
-				for (var i of types.slice(1))
-					inner += spanTemp.format('none', ' / ') + spanTemp.format('red', i);
-				renderHTML.push(inner);
-			} else
-				renderHTML.push(spanTemp.format('green', stat.type));
-		} else
-			renderHTML.push(spanTemp.format('red', _('Disabled')));
-	return renderHTML;
-}
-
 return view.extend({
-	load: function() {
+	getRuntimeStatus() {
+		return L.resolveDefault(
+			fs.exec_direct('/usr/libexec/luci-turboacc-status', [], 'json'), {});
+	},
+
+	load() {
 		return Promise.all([
-			uci.load('turboacc'),
 			L.resolveDefault(getSystemFeatures(), {}),
-			L.resolveDefault(fs.stat('/etc/init.d/qca-nss-ecm'), null)
+			this.getRuntimeStatus()
 		]);
 	},
 
-	render: function(data) {
-		var m, s, o;
-		var features = data[1];
-		features.hasNSSECM = !!features.hasNSSECM || !!data[2];
+	render([features, runtimeStatus]) {
+		let m, s, o;
+		const fw4 = L.hasSystemFeature('firewall4');
+		const runtimeStatusText = E('span', {}, [ '-' ]);
+		const updateRuntimeStatus = (status) => {
+			const natModes = {
+				fullcone: 'FULLCONENAT',
+				nat1: _('Broadcom Fullcone NAT1'),
+				disabled: _('Disabled')
+			};
+			const natMode = natModes[status?.nat_mode] || _('Unknown');
+			const tcpcca = status?.tcp_cca
+				? status.tcp_cca.toUpperCase()
+				: _('Unknown');
 
-		m = new form.Map('turboacc', _('TurboACC settings'),
+			runtimeStatusText.textContent =
+				_('Running status: %s, TCP congestion control algorithm is %s').format(natMode, tcpcca);
+		};
+		const addTCPCCAOption = () => {
+			const tcpcca = s.option(form.ListValue, 'tcpcca', _('TCP CCA'),
+				_('TCP congestion control algorithm.'));
+			tcpcca.value('bbr', 'bbr');
+			tcpcca.value('cubic', 'cubic');
+			tcpcca.value('reno', 'reno');
+			tcpcca.default = 'cubic';
+			tcpcca.rmempty = false;
+		};
+		/* The Shortcut-FE options are kept in the turboacc config */
+		const turboaccOption = (opt) => {
+			opt.load = () => uci.get('turboacc', 'config', opt.option);
+			opt.write = (section_id, value) => {
+				if (!uci.get('turboacc', 'config'))
+					uci.add('turboacc', 'turboacc', 'config');
+				uci.set('turboacc', 'config', opt.option, value);
+			};
+			opt.remove = () => uci.unset('turboacc', 'config', opt.option);
+			return opt;
+		};
+
+		updateRuntimeStatus(runtimeStatus);
+
+		m = new form.Map('firewall', _('TurboACC settings'),
 			_('Open source flow offloading engine (fast path or hardware NAT).'));
+		m.chain('turboacc');
+		const hasQualcommECM = runtimeStatus?.ecm_available === true;
+		if (hasQualcommECM)
+			m.chain('ecm');
 
-		s = m.section(form.TypedSection);
+		/* With a context, as the official luci-base translates "General Settings" differently from lede */
+		s = m.section(form.TypedSection, 'defaults', _('General Settings', 'TurboACC'));
 		s.anonymous = true;
-		s.render = function () {
-			poll.add(function () {
-				return L.resolveDefault(getServiceStatus()).then(function (res) {
-					var stats = renderStatus(res);
-					var tds = [ 'fastpath_state', 'fullcone_state', 'tcpcca_state' ];
-					for (var i in tds) {
-						var view = document.getElementById(tds[i]);
-						view.innerHTML = stats[i];
-					}
-				});
-			});
+		s.addremove = false;
 
-			return E('fieldset', { 'class': 'cbi-section' }, [
-				E('legend', {}, _('Acceleration Status')),
-				E('table', { 'class': 'table', 'width': '100%', 'cellspacing': '10' }, [
-					E('tr', {}, [
-						E('td', { 'width': '33%' }, _('FastPath Engine')),
-						E('td', { 'id': 'fastpath_state' }, E('em', {}, _('Collecting data...')))
-					]),
-					E('tr', {}, [
-						E('td', { 'width': '33%' }, _('Full Cone NAT')),
-						E('td', { 'id': 'fullcone_state' }, E('em', {}, _('Collecting data...')))
-					]),
-					E('tr', {}, [
-						E('td', { 'width': '33%' }, _('TCP CCA')),
-						E('td', { 'id': 'tcpcca_state' }, E('em', {}, _('Collecting data...')))
-					])
-				])
-			]);
+		if (features.hasXTFULLCONENAT || features.hasNFTFULLCONENAT) {
+			o = s.option(form.ListValue, 'fullcone', _('Enable FullCone NAT'));
+			o.value('0', _('Disable'));
+			o.value('1', _('FULLCONENAT'));
+			o.value('2', _('Broadcom Fullcone NAT1'));
+			addTCPCCAOption();
+			if (fw4)
+				o = s.option(form.Flag, 'fullcone6', _('Enable FullCone NAT6'));
+		}
+		else {
+			addTCPCCAOption();
 		}
 
-		s = m.section(form.NamedSection, 'config', 'turboacc');
+		/* Netfilter flow offload support */
 
-		o = s.option(form.ListValue, 'fastpath', _('Fastpath engine'),
-			_('The offloading engine for routing/NAT.'));
-		o.value('disabled', _('Disable'));
-		if (features.hasFLOWOFFLOADING)
-			o.value('flow_offloading', _('Flow offloading'));
-		if (features.hasFASTCLASSIFIER)
-			o.value('fast_classifier', _('Fast classifier'));
-		if (features.hasSHORTCUTFECM)
-			o.value('shortcut_fe_cm', _('SFE connection manager'));
-		if (features.hasNSSECM)
-			o.value('qca_nss_ecm', _('QCA NSS ECM'));
-		if (features.hasMEDIATEKHNAT)
-			o.value('mediatek_hnat', _('MediaTek HNAT'));
-		o.default = 'disabled';
-		o.rmempty = false;
-		o.onchange = function(ev, section_id, value) {
-			var desc = ev.target.nextElementSibling;
-			if (value === 'flow_offloading')
-				desc.innerHTML = _('Software based offloading for routing/NAT.');
-			else if (value === 'fast_classifier')
-				desc.innerHTML = _('Fast classifier connection manager for the shortcut forwarding engine.');
-			else if (value === 'shortcut_fe_cm')
-				desc.innerHTML = _('Simple connection manager for the shortcut forwarding engine.');
-			else if (value === 'qca_nss_ecm')
-				desc.innerHTML = _('Qualcomm NSS ECM acceleration engine.');
-			else if (value === 'mediatek_hnat')
-				desc.innerHTML = _('MediaTek\'s open source hardware offloading engine.');
-			else
-				desc.innerHTML = _('The offloading engine for routing/NAT.');
+		const hasMediatekHNAT = fw4 && runtimeStatus?.hnat_available === true;
+		const hasOffloading = L.hasSystemFeature('offloading') || hasMediatekHNAT || hasQualcommECM;
+		if (hasOffloading) {
+			s = m.section(form.TypedSection, 'defaults', _('Routing/NAT Offloading'),
+				_('Not fully compatible with QoS/SQM.'));
+
+			s.anonymous = true;
+			s.addremove = false;
+
+			o = s.option(form.RichListValue, "offloading_type", _("Flow offloading type"));
+			o.value('0', _("None"));
+			if (L.hasSystemFeature('offloading'))
+				o.value('1', _("Software flow offloading"), _('Software based offloading for routing/NAT.'));
+			if (features.hasHWFLOWOFFLOADING)
+				o.value('2', _("Hardware flow offloading"), _('Hardware based offloading for routing with/without NAT.') + ' ' + _(' Requires hardware NAT support.'));
+			if (hasMediatekHNAT)
+				o.value('3', _('MediaTek HNAT'), _('Hardware NAT offloading using the MediaTek vendor driver.'));
+			if (hasQualcommECM)
+				o.value('4', _('Qualcomm NSS ECM acceleration'), _('Automatically select the acceleration engine in ECM Auto mode.'));
+			o.optional = false;
+			o.load = function (section_id) {
+				const flow_offloading = uci.get('firewall', section_id, 'flow_offloading');
+				const flow_offloading_hw = uci.get('firewall', section_id, 'flow_offloading_hw');
+				const has_hw_offloading = features.hasHWFLOWOFFLOADING;
+				if (hasQualcommECM && uci.get('ecm', 'global', 'acceleration_engine') !== 'disabled')
+					return '4';
+				if (hasMediatekHNAT && flow_offloading === '3')
+					return '3';
+				return (flow_offloading === '1' && L.hasSystemFeature('offloading'))
+					? ((flow_offloading_hw === '1' && has_hw_offloading) ? '2' : '1')
+					: '0';
+			};
+			o.write = function(section_id, value) {
+				if (hasQualcommECM) {
+					if (!uci.get('ecm', 'global'))
+						uci.add('ecm', 'ecm', 'global');
+					uci.set('ecm', 'global', 'acceleration_engine', value === '4' ? 'auto' : 'disabled');
+				}
+				uci.set('firewall', section_id, 'flow_offloading', value === '3' ? '3' : ((value === '1' || value === '2') ? '1' : '0'));
+				uci.unset('firewall', section_id, 'mediatek_hnat');
+				uci.set('firewall', section_id, 'flow_offloading_hw',
+					(value === '2' && features.hasHWFLOWOFFLOADING) ? '1' : null);
+			};
 		}
 
-		o = s.option(form.Flag, 'fastpath_fo_hw', _('Hardware flow offloading'),
-			_('Requires hardware NAT support. Implemented at least for mt7621.'));
-		o.default = o.disabled;
-		o.rmempty = false;
-		o.depends('fastpath', 'flow_offloading');
+		/* Shortcut-FE */
 
-		o = s.option(form.Flag, 'fastpath_fc_br', _('Bridge Acceleration'),
-			_('Enable bridge acceleration (may be functional conflict with bridge-mode VPN server).'));
-		o.default = o.disabled;
-		o.rmempty = false;
-		o.depends('fastpath', 'fast_classifier');
+		if (features.hasFASTCLASSIFIER || features.hasSHORTCUTFECM) {
+			s = m.section(form.TypedSection, 'defaults', _('Shortcut-FE'),
+				hasOffloading ? _('Cannot be used together with flow offloading, only available when the flow offloading type is None.') : null);
 
-		if (features.hasIPV6) {
-			o = s.option(form.Flag, 'fastpath_fc_ipv6', _('IPv6 acceleration'),
-				_('Enable IPv6 Acceleration.'));
+			s.anonymous = true;
+			s.addremove = false;
+
+			o = turboaccOption(s.option(form.RichListValue, 'fastpath', _('Fastpath engine')));
+			o.value('disabled', _('Disable'));
+			if (features.hasFASTCLASSIFIER)
+				o.value('fast_classifier', _('Fast classifier'),
+					_('Fast classifier connection manager for the shortcut forwarding engine.'));
+			if (features.hasSHORTCUTFECM)
+				o.value('shortcut_fe_cm', _('SFE connection manager'),
+					_('Simple connection manager for the shortcut forwarding engine.'));
+			o.default = 'disabled';
+			o.rmempty = false;
+			if (hasOffloading)
+				o.depends('offloading_type', '0');
+
+			o = turboaccOption(s.option(form.Flag, 'fastpath_fc_br', _('Bridge Acceleration'),
+				_('Enable bridge acceleration (may be functional conflict with bridge-mode VPN server).')));
 			o.default = o.disabled;
 			o.rmempty = false;
 			o.depends('fastpath', 'fast_classifier');
+
+			if (features.hasIPV6) {
+				o = turboaccOption(s.option(form.Flag, 'fastpath_fc_ipv6', _('IPv6 acceleration'),
+					_('Enable IPv6 Acceleration.')));
+				o.default = o.disabled;
+				o.rmempty = false;
+				o.depends('fastpath', 'fast_classifier');
+			}
 		}
 
-		o = s.option(form.Flag, 'fastpath_mh_eth_hnat', _('Enable ethernet HNAT'),
-			_('Enable hardware offloading for wired connections.'));
-		o.default = o.enabled;
-		o.rmempty = false;
-		o.depends('fastpath', 'mediatek_hnat');
+		return m.render().then(L.bind(function(mapEl) {
+			const firstSection = mapEl.querySelector('.cbi-section');
+			const statusSection = E('div', {
+				'class': 'cbi-section firewall-runtime-status',
+				'style': 'overflow-x:auto'
+			}, [
+				E('div', {
+					'style': 'padding:.75em 1.5em;color:#008000;font-size:1em;font-weight:600;white-space:nowrap'
+				}, [ runtimeStatusText ])
+			]);
 
-		o = s.option(form.Flag, 'fastpath_mh_eth_hnat_v6', _('Enable ethernet IPv6 HNAT'),
-			_('Enable hardware offloading for wired IPv6 connections.'));
-		o.default = o.enabled;
-		o.rmempty = false;
-		o.depends('fastpath_mh_eth_hnat', '1');
+			firstSection.parentNode.insertBefore(statusSection, firstSection);
 
-		if (features.hasMTKWEDWO) {
-			o = s.option(form.Flag, 'fastpath_mh_eth_hnat_wed', _('MTK WED WO offloading'),
-				_('Requires hardware support, implemented at least for Filogic 8x0') + ' ' +
-				_('Takes effect after rebooting the router.'));
-			o.default = o.disabled;
-			o.rmempty = false;
-			o.depends({ 'fastpath': 'flow_offloading', 'fastpath_fo_hw': '1' });
-		}
+			poll.add(L.bind(function() {
+				return this.getRuntimeStatus().then(updateRuntimeStatus);
+			}, this), 5);
 
-		o = s.option(form.ListValue, 'fullcone', _('Full cone NAT'),
-			_('Full cone NAT (NAT1) can improve gaming performance effectively.'));
-		o.value('0', _('Disable'))
-		if (features.hasXTFULLCONENAT || features.hasNFTFULLCONENAT)
-			o.value('1', _('FULLCONENAT'));
-		if (!features.hasNFTFULLCONENAT)
-			o.value('2', _('Boardcom Fullcone NAT1'));
-		o.default = '0';
-		o.rmempty = false;
-
-		o = s.option(form.ListValue, 'tcpcca', _('TCP CCA'),
-			_('TCP congestion control algorithm.'));
-		for (var i of features.hasTCPCCA.split(' ').sort())
-			o.value(i);
-		o.default = 'cubic';
-		o.rmempty = false;
-
-		return m.render();
-	},
-
-	markUserEdited() {
-		uci.set('turboacc', 'global', 'set', '1');
-	},
-
-	handleSave(ev) {
-		this.markUserEdited();
-		return this.super('handleSave', [ev]);
-	},
-
-	handleSaveApply(ev, mode) {
-		this.markUserEdited();
-
-		const applyNssEcmRestart = () => {
-			const section = uci.sections('turboacc', 'turboacc').find(s => s['.name'] == 'config');
-
-			if (section?.fastpath === 'qca_nss_ecm')
-				callInitAction('qca-nss-ecm', 'restart');
-		};
-
-		const fn = L.bind(() => {
-			uci.unload('turboacc');
-			uci.load('turboacc').then(applyNssEcmRestart);
-			document.removeEventListener('uci-applied', fn);
-		});
-
-		document.addEventListener('uci-applied', fn);
-		return this.super('handleSaveApply', [ev, mode]);
+			return mapEl;
+		}, this));
 	}
 });

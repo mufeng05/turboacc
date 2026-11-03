@@ -10,6 +10,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 concurrency:
   group: sync-upstream
@@ -36,6 +37,10 @@ jobs:
           rm -rf "$CLONE_PATH"
           mkdir -p "$CLONE_PATH"
           git clone --depth=1 --single-branch https://github.com/coolsnowwolf/lede "$CLONE_PATH/lede"
+          # lede 的 luci feed 使用 openwrt-25.12 分支，只取防火墙页面和 luci-base 的 rpcd 插件
+          git clone --depth=1 --single-branch --branch openwrt-25.12 --filter=blob:none --sparse \
+            https://github.com/coolsnowwolf/luci "$CLONE_PATH/luci"
+          git -C "$CLONE_PATH/luci" sparse-checkout set applications/luci-app-firewall modules/luci-base/root/usr/share/rpcd/ucode
 
       - name: 从上游同步文件到 lede/
         run: |
@@ -66,25 +71,62 @@ jobs:
           sync_file "$LEDE/target/linux/generic/hack-6.6/953-net-patch-linux-kernel-to-support-shortcut-fe.patch"         "hack-6.6/953-net-patch-linux-kernel-to-support-shortcut-fe.patch"
           sync_file "$LEDE/target/linux/generic/hack-6.6/982-add-bcm-fullconenat-support.patch"                           "hack-6.6/982-add-bcm-fullconenat-support.patch"
           sync_file "$LEDE/target/linux/generic/hack-6.6/983-add-bcm-fullconenat-to-nft.patch"                            "hack-6.6/983-add-bcm-fullconenat-to-nft.patch"
+          sync_file "$LEDE/target/linux/generic/hack-6.6/985-netfilter-bcm-fullcone-reserve-expectation-early.patch"      "hack-6.6/985-netfilter-bcm-fullcone-reserve-expectation-early.patch"
 
           sync_file "$LEDE/target/linux/generic/hack-6.12/952-add-net-conntrack-events-support-multiple-registrant.patch" "hack-6.12/952-add-net-conntrack-events-support-multiple-registrant.patch"
           sync_file "$LEDE/target/linux/generic/hack-6.12/953-net-patch-linux-kernel-to-support-shortcut-fe.patch"        "hack-6.12/953-net-patch-linux-kernel-to-support-shortcut-fe.patch"
           sync_file "$LEDE/target/linux/generic/hack-6.12/982-add-bcm-fullconenat-support.patch"                          "hack-6.12/982-add-bcm-fullconenat-support.patch"
           sync_file "$LEDE/target/linux/generic/hack-6.12/983-add-bcm-fullconenat-to-nft.patch"                           "hack-6.12/983-add-bcm-fullconenat-to-nft.patch"
+          sync_file "$LEDE/target/linux/generic/hack-6.12/985-netfilter-bcm-fullcone-reserve-expectation-early.patch"     "hack-6.12/985-netfilter-bcm-fullcone-reserve-expectation-early.patch"
 
           sync_file "$LEDE/target/linux/generic/hack-6.18/952-add-net-conntrack-events-support-multiple-registrant.patch" "hack-6.18/952-add-net-conntrack-events-support-multiple-registrant.patch"
           sync_file "$LEDE/target/linux/generic/hack-6.18/953-net-patch-linux-kernel-to-support-shortcut-fe.patch"        "hack-6.18/953-net-patch-linux-kernel-to-support-shortcut-fe.patch"
           sync_file "$LEDE/target/linux/generic/hack-6.18/982-add-bcm-fullconenat-support.patch"                          "hack-6.18/982-add-bcm-fullconenat-support.patch"
+          sync_file "$LEDE/target/linux/generic/hack-6.18/983-add-bcm-fullconenat-to-nft.patch"                           "hack-6.18/983-add-bcm-fullconenat-to-nft.patch"
+          sync_file "$LEDE/target/linux/generic/hack-6.18/984-netfilter-reserve-unconfirmed-nat-tuples.patch"             "hack-6.18/984-netfilter-reserve-unconfirmed-nat-tuples.patch"
+          sync_file "$LEDE/target/linux/generic/hack-6.18/985-netfilter-bcm-fullcone-reserve-expectation-early.patch"     "hack-6.18/985-netfilter-bcm-fullcone-reserve-expectation-early.patch"
 
           sync_file "$LEDE/package/network/config/firewall/patches/100-fullconenat.patch"                                 "patches/firewall/patches/100-fullconenat.patch"
           sync_file "$LEDE/package/network/config/firewall/patches/101-bcm-fullconenat.patch"                             "patches/firewall/patches/101-bcm-fullconenat.patch"
           sync_file "$LEDE/package/network/config/firewall4/patches/001-firewall4-add-support-for-fullcone-nat.patch"     "patches/firewall4/patches/001-firewall4-add-support-for-fullcone-nat.patch"
+          sync_file "$LEDE/package/network/config/firewall4/patches/002-firewall4-add-brcm-fullcone-mode.patch"           "patches/firewall4/patches/002-firewall4-add-brcm-fullcone-mode.patch"
+          sync_file "$LEDE/package/network/config/firewall4/patches/003-add-tcpcca-default-and-apply.patch"               "patches/firewall4/patches/003-add-tcpcca-default-and-apply.patch"
+          sync_file "$LEDE/package/network/config/firewall4/patches/007-fix-ipv6-masquerade-fullcone-argument.patch"      "patches/firewall4/patches/007-fix-ipv6-masquerade-fullcone-argument.patch"
           sync_file "$LEDE/package/network/utils/iptables/patches/900-bcm-fullconenat.patch"                              "patches/iptables/patches/900-bcm-fullconenat.patch"
           sync_file "$LEDE/package/libs/libnftnl/patches/001-libnftnl-add-fullcone-expression-support.patch"              "patches/libnftnl/patches/001-libnftnl-add-fullcone-expression-support.patch"
+          sync_file "$LEDE/package/libs/libnftnl/patches/002-libnftnl-add-masquerade-fullcone-flag.patch"                 "patches/libnftnl/patches/002-libnftnl-add-masquerade-fullcone-flag.patch"
           sync_file "$LEDE/package/network/utils/nftables/patches/100-nftables-add-fullcone-expression-support.patch"     "patches/nftables/patches/100-nftables-add-fullcone-expression-support.patch"
+          sync_file "$LEDE/package/network/utils/nftables/patches/103-nftables-add-masquerade-fullcone-flag.patch"        "patches/nftables/patches/103-nftables-add-masquerade-fullcone-flag.patch"
+          sync_file "$LEDE/package/network/utils/nftables/patches/104-fix-fullcone-json-parsing.patch"                    "patches/nftables/patches/104-fix-fullcone-json-parsing.patch"
 
           sync_file "$LEDE/target/linux/generic/pending-6.6/613-netfilter_optional_tcp_window_check.patch"                "pending-6.6/613-netfilter_optional_tcp_window_check.patch"
           sync_file "$LEDE/target/linux/generic/pending-6.12/613-netfilter_optional_tcp_window_check.patch"               "pending-6.12/613-netfilter_optional_tcp_window_check.patch"
+          sync_file "$LEDE/target/linux/generic/pending-6.18/613-netfilter_optional_tcp_window_check.patch"               "pending-6.18/613-netfilter_optional_tcp_window_check.patch"
+
+          # 上游与本项目相关的补丁清单：新增或删除的补丁会出现在差异里（上面按文件名同步的列表发现不了）
+          git -C "$LEDE" ls-tree -r --name-only HEAD -- \
+              package/network/config/firewall/patches package/network/config/firewall4/patches package/libs/libnftnl/patches \
+              package/network/utils/nftables/patches package/network/utils/iptables/patches target/linux/generic |
+            grep -E '^package/(network/config/firewall4?|libs/libnftnl)/patches/|^package/network/utils/(nftables|iptables)/patches/.*fullcone|^target/linux/generic/hack-[^/]+/[^/]*(fullcone|shortcut-fe|conntrack-events|nat-tuples)|^target/linux/generic/pending-[^/]+/[^/]*tcp_window_check' |
+            grep -vE '^target/linux/generic/(hack|pending)-(5\.[0-9]+|6\.1)/' |
+            LC_ALL=C sort > "$DEST/upstream-patches.txt"
+
+          # TurboACC 页面移植自 lede 防火墙页面中的对应部分，这里保存所依据的 lede 文件，上游改动时提醒同步
+          LUCI="$CLONE_PATH/luci"
+          FW="$LUCI/applications/luci-app-firewall"
+          sync_file "$FW/htdocs/luci-static/resources/view/firewall/zones.js" "luci-app-firewall/zones.js"
+          sync_file "$FW/root/usr/libexec/luci-firewall-status"               "luci-app-firewall/luci-firewall-status"
+          # 只取页面用到的译文
+          python3 .github/scripts/filter_po.py custom/luci-app-turboacc/po/templates/turboacc.pot \
+            "$FW/po/zh_Hans/firewall.po" > "$DEST/luci-app-firewall/firewall.zh_Hans.po"
+          # lede luci-base 中硬件流量卸载与全锥的判断（官方 luci-base 没有，已移植到 luci.turboacc）
+          sed -n -e '/^function has_supported_hw_offloading_target/,/^}/p' \
+                 -e '/const has_\(fw3\|fw4\|ipt_flowoffload\|nft_flowoffload\|mt7621_vendor_hnat\|hw_offloading\) =/,/;$/p' \
+                 -e '/^[[:space:]]*\(offloading\|offloading_hw\|fullcone\):/p' \
+                 "$LUCI/modules/luci-base/root/usr/share/rpcd/ucode/luci" > "$DEST/luci-app-firewall/luci-base-features.uc"
+          if [ ! -s "$DEST/luci-app-firewall/luci-base-features.uc" ]; then
+            echo "::error::lede luci-base 中找不到硬件流量卸载与全锥的判断"; exit 1
+          fi
 
       - name: 检测变更并生成摘要
         id: summary
@@ -103,10 +145,56 @@ jobs:
             } >> "$GITHUB_OUTPUT"
             echo "检测到上游更新："
             git diff --cached --stat -- lede
+
+            # custom/ 下有据这些 lede 文件改写或与之配套的文件，上游改动后不会自动跟随，需要人工确认
+            notes=""
+            while IFS= read -r f; do
+              name=$(basename "$f")
+              case "$f" in
+                lede/patches/firewall4/patches/001-*)   d="custom/patches/firewall4/patches-*/$name" ;;
+                lede/patches/nftables/patches/100-*|lede/patches/nftables/patches/103-*)
+                                                        d="custom/patches/nftables/patches-*/$name" ;;
+                lede/patches/libnftnl/patches/001-*)    d="custom/patches/libnftnl/patches-*/$name" ;;
+                lede/patches/iptables/patches/900-*)    d="custom/patches/iptables/patches/$name" ;;
+                lede/fullconenat/Makefile|lede/fullconenat-nft/Makefile)
+                                                        d="custom/${f#lede/}" ;;
+                lede/hack-6.18/953-*)                   d="custom/hack-6.18/$name" ;;
+                lede/hack-*/952-*)                      kv=${f#lede/hack-}; d="custom/hack-${kv%%/*}*/951-disable-unused-functions.patch" ;;
+                lede/shortcut-fe/fast-classifier/src/*) d="custom/shortcut-fe/fast-classifier/patches/001-fix-build.patch" ;;
+                lede/luci-app-firewall/zones.js)        d="custom/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js" ;;
+                lede/luci-app-firewall/luci-firewall-status)
+                                                        d="custom/luci-app-turboacc/root/usr/libexec/luci-turboacc-status" ;;
+                lede/luci-app-firewall/firewall.zh_Hans.po)
+                                                        d="custom/luci-app-turboacc/po/zh_Hans/turboacc.po" ;;
+                lede/luci-app-firewall/luci-base-features.uc)
+                                                        d="custom/luci-app-turboacc/root/usr/share/rpcd/ucode/luci.turboacc" ;;
+                lede/upstream-patches.txt)
+                  notes="${notes}- \`$f\`：上游新增或删除了补丁，确认是否需要加入本工作流的同步列表和 \`add_turboacc.sh\`"$'\n'
+                  continue ;;
+                *) continue ;;
+              esac
+              notes="${notes}- \`$f\` → \`$d\`"$'\n'
+            done < <(git diff --cached --name-only -- lede)
+            {
+              echo "custom_notes<<__EOF__"
+              if [ -n "$notes" ]; then
+                echo "### ⚠️ 需要检查的 custom 文件"
+                echo
+                echo "以下 lede 文件有改动，\`custom/\` 下据它们改写或与之配套的文件不会自动跟随，请确认是否需要同步调整："
+                echo
+                printf '%s' "$notes"
+              fi
+              echo "__EOF__"
+            } >> "$GITHUB_OUTPUT"
+            if [ -n "$notes" ]; then
+              echo "需要检查的 custom 文件："
+              printf '%s' "$notes"
+            fi
           fi
           git reset -q -- lede
 
       - name: 创建/更新 Pull Request
+        id: pr
         if: steps.summary.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
@@ -121,10 +209,22 @@ jobs:
 
             已从上游同步 `lede/` 下的文件，来源：
             - `coolsnowwolf/lede` (master)
+            - `coolsnowwolf/luci` (openwrt-25.12)：`lede/luci-app-firewall/` 下是 TurboACC 页面所移植的 lede 防火墙页面文件
 
             ### 变更文件
             ```
             ${{ steps.summary.outputs.summary }}
             ```
 
+            ${{ steps.summary.outputs.custom_notes }}
+
+            已在本分支上运行“检查补丁兼容性”工作流，结果见 Actions。
+
             > ⚠️ 合并前请确认这些改动不会覆盖本仓库的本地定制。
+
+      # GITHUB_TOKEN 创建的 PR 不会触发 pull_request 工作流，这里手动在 PR 分支上运行补丁兼容性检查
+      - name: 检查 PR 分支的补丁兼容性
+        if: steps.pr.outputs.pull-request-operation == 'created' || steps.pr.outputs.pull-request-operation == 'updated'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run compat.yml --ref auto-sync/upstream

@@ -1,0 +1,18 @@
+{
+	"luci-app-turboacc": {
+		"description": "Grant UCI access for luci-app-turboacc",
+		"read": {
+			"cgi-io": [ "exec" ],
+			"file": {
+				"/usr/libexec/luci-turboacc-status": [ "exec" ]
+			},
+			"ubus": {
+				"luci.turboacc": [ "getSystemFeatures" ]
+			},
+			"uci": [ "turboacc", "firewall", "ecm" ]
+		},
+		"write": {
+			"uci": [ "turboacc", "firewall", "ecm" ]
+		}
+	}
+}

@@ -83,6 +83,49 @@ find_best_patch_dir() {
     echo "$best_dir"
 }
 
+# Find the best matching package patch directory based on version threshold.
+# The suffix is a PKG_VERSION or PKG_SOURCE_DATE. For firewall4 2026-10-29 and
+# directories patches-2026-10-26, patches-2026-10-28:
+#   patches-2026-10-26 <= 2026-10-29 ✓
+#   patches-2026-10-28 <= 2026-10-29 ✓  ← highest match, use this
+# Without a match, the lede patches are used as they are.
+find_best_pkg_patch_dir() {
+    local base_path="$1"
+    local pkg_ver="$2"   # PKG_VERSION or PKG_SOURCE_DATE, e.g. 1.1.7 or 2026-10-29
+
+    local best_dir=""
+    local best_ver=""
+
+    [ -n "$pkg_ver" ] || return 0
+
+    for dir in "$base_path"/patches-*; do
+        [ -d "$dir" ] || continue
+        local dv
+        dv="$(basename "$dir")"
+        dv="${dv#patches-}"
+
+        # Skip if dir version > package version
+        local smaller
+        smaller="$(printf '%s\n%s' "$dv" "$pkg_ver" | sort -V | head -n1)"
+        [ "$smaller" = "$dv" ] || continue
+
+        # Keep the highest match
+        if [ -z "$best_ver" ]; then
+            best_dir="$dir"
+            best_ver="$dv"
+        else
+            local higher
+            higher="$(printf '%s\n%s' "$best_ver" "$dv" | sort -V | tail -n1)"
+            if [ "$higher" = "$dv" ]; then
+                best_dir="$dir"
+                best_ver="$dv"
+            fi
+        fi
+    done
+
+    echo "$best_dir"
+}
+
 git clone --depth=1 --single-branch https://github.com/mufeng05/turboacc "$TMPDIR/turboacc" || exit 1
 
 mkdir -p "./package/turboacc"
@@ -100,9 +143,13 @@ for kernel_version in $kernel_versions; do
         cp -f "$TMPDIR/turboacc/lede/hack-$kernel_version/953-net-patch-linux-kernel-to-support-shortcut-fe.patch" "./target/linux/generic/hack-$kernel_version"
         cp -f "$TMPDIR/turboacc/lede/hack-$kernel_version/982-add-bcm-fullconenat-support.patch" "./target/linux/generic/hack-$kernel_version"
 
-        if [ -f "$TMPDIR/turboacc/lede/hack-$kernel_version/983-add-bcm-fullconenat-to-nft.patch" ]; then
-            cp -f "$TMPDIR/turboacc/lede/hack-$kernel_version/983-add-bcm-fullconenat-to-nft.patch" "./target/linux/generic/hack-$kernel_version"
-        fi
+        for patch in 983-add-bcm-fullconenat-to-nft.patch \
+                     984-netfilter-reserve-unconfirmed-nat-tuples.patch \
+                     985-netfilter-bcm-fullcone-reserve-expectation-early.patch; do
+            if [ -f "$TMPDIR/turboacc/lede/hack-$kernel_version/$patch" ]; then
+                cp -f "$TMPDIR/turboacc/lede/hack-$kernel_version/$patch" "./target/linux/generic/hack-$kernel_version"
+            fi
+        done
 
         if [ -f "$TMPDIR/turboacc/lede/pending-$kernel_version/613-netfilter_optional_tcp_window_check.patch" ]; then
             cp -f "$TMPDIR/turboacc/lede/pending-$kernel_version/613-netfilter_optional_tcp_window_check.patch" "./target/linux/generic/pending-$kernel_version"
@@ -130,8 +177,6 @@ cp -rf "$TMPDIR/turboacc/lede/patches/libnftnl/patches/"* "./package/libs/libnft
 
 echo "Applying custom patches..."
 
-mkdir -p "./package/turboacc/luci-app-turboacc/root/usr/share/rpcd/ucode"
-mkdir -p "./package/turboacc/luci-app-turboacc/root/usr/share/ucitrack"
 mkdir -p "./package/turboacc/shortcut-fe/fast-classifier/patches"
 
 kv_array=($kernel_versions)
@@ -150,17 +195,46 @@ for i in "${!kv_array[@]}"; do
     fi
 done
 
-cp -f "$TMPDIR/turboacc/custom/luci-app-turboacc/Makefile" "./package/turboacc/luci-app-turboacc/"
-cp -f "$TMPDIR/turboacc/custom/luci-app-turboacc/root/etc/uci-defaults/turboacc" "./package/turboacc/luci-app-turboacc/root/etc/uci-defaults/"
-cp -f "$TMPDIR/turboacc/custom/luci-app-turboacc/root/usr/share/rpcd/ucode/luci.turboacc" "./package/turboacc/luci-app-turboacc/root/usr/share/rpcd/ucode/"
-cp -f "$TMPDIR/turboacc/custom/luci-app-turboacc/root/usr/share/ucitrack/luci-app-turboacc.json" "./package/turboacc/luci-app-turboacc/root/usr/share/ucitrack/"
-cp -f "$TMPDIR/turboacc/custom/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js" "./package/turboacc/luci-app-turboacc/htdocs/luci-static/resources/view/"
-rm -rf "./package/turboacc/luci-app-turboacc/root/usr/libexec"
+# The files in custom/luci-app-turboacc replace those of lede, the rpcd backend is the ucode one
+rm -rf "./package/turboacc/luci-app-turboacc/root/usr/libexec/rpcd"
+cp -rf "$TMPDIR/turboacc/custom/luci-app-turboacc/." "./package/turboacc/luci-app-turboacc/"
+chmod 755 "./package/turboacc/luci-app-turboacc/root/etc/init.d/turboacc" \
+          "./package/turboacc/luci-app-turboacc/root/usr/libexec/luci-turboacc-status"
 cp -f "$TMPDIR/turboacc/custom/fullconenat/Makefile" "./package/turboacc/fullconenat/"
 cp -f "$TMPDIR/turboacc/custom/fullconenat-nft/Makefile" "./package/turboacc/fullconenat-nft/"
 
 cp -f "$TMPDIR/turboacc/custom/patches/iptables/patches/900-bcm-fullconenat.patch" "./package/network/utils/iptables/patches/"
 cp -f "$TMPDIR/turboacc/custom/shortcut-fe/fast-classifier/patches/001-fix-build.patch" "./package/turboacc/shortcut-fe/fast-classifier/patches/"
+
+# Newer firewall4, nftables and libnftnl no longer accept some lede patches, use the rebased ones instead
+fw4_ver="$(sed -n 's/^PKG_SOURCE_DATE:=//p' "./package/network/config/firewall4/Makefile" 2>/dev/null)"
+patch_dir=$(find_best_pkg_patch_dir "$TMPDIR/turboacc/custom/patches/firewall4" "$fw4_ver")
+if [ -n "$patch_dir" ]; then
+    echo "firewall4 $fw4_ver: using patches from $(basename "$patch_dir")"
+    cp -f "$patch_dir"/*.patch "./package/network/config/firewall4/patches/"
+fi
+
+nft_ver="$(sed -n 's/^PKG_VERSION:=//p' "./package/network/utils/nftables/Makefile" 2>/dev/null)"
+patch_dir=$(find_best_pkg_patch_dir "$TMPDIR/turboacc/custom/patches/nftables" "$nft_ver")
+if [ -n "$patch_dir" ]; then
+    echo "nftables $nft_ver: using patches from $(basename "$patch_dir")"
+    cp -f "$patch_dir"/*.patch "./package/network/utils/nftables/patches/"
+fi
+
+nftnl_ver="$(sed -n 's/^PKG_VERSION:=//p' "./package/libs/libnftnl/Makefile" 2>/dev/null)"
+patch_dir=$(find_best_pkg_patch_dir "$TMPDIR/turboacc/custom/patches/libnftnl" "$nftnl_ver")
+if [ -n "$patch_dir" ]; then
+    echo "libnftnl $nftnl_ver: using patches from $(basename "$patch_dir")"
+    cp -f "$patch_dir"/*.patch "./package/libs/libnftnl/patches/"
+fi
+
+# The libnftnl fullcone patch adds a source file, so the autotools files must be regenerated.
+# lede sets PKG_FIXUP:=autoreconf for libnftnl and nftables, official OpenWrt does not always
+for makefile in "./package/libs/libnftnl/Makefile" "./package/network/utils/nftables/Makefile"; do
+    if [ -f "$makefile" ] && ! grep -q '^PKG_FIXUP:=.*autoreconf' "$makefile"; then
+        sed -i '/^include $(INCLUDE_DIR)\/package.mk/i PKG_FIXUP:=autoreconf' "$makefile"
+    fi
+done
 
 echo ""
 echo "Finish"
