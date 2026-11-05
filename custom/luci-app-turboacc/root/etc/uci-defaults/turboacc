@@ -76,11 +76,8 @@ else
 		uci -q set "firewall.@defaults[0].fullcone"="0"
 	fi
 
-	if grep -qw "bbr" "/proc/sys/net/ipv4/tcp_available_congestion_control" || [ -e "/lib/modules/$kernel_ver/tcp_bbr.ko" ]; then
-		uci -q set "firewall.@defaults[0].tcpcca"="bbr"
-	else
-		uci -q set "firewall.@defaults[0].tcpcca"="cubic"
-	fi
+	# Same default as lede, BBR can be chosen on the page
+	uci -q set "firewall.@defaults[0].tcpcca"="cubic"
 fi
 
 uci -q commit "turboacc"

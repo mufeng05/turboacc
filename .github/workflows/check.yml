@@ -92,6 +92,8 @@ jobs:
           sync_file "$LEDE/package/network/config/firewall4/patches/002-firewall4-add-brcm-fullcone-mode.patch"           "patches/firewall4/patches/002-firewall4-add-brcm-fullcone-mode.patch"
           sync_file "$LEDE/package/network/config/firewall4/patches/003-add-tcpcca-default-and-apply.patch"               "patches/firewall4/patches/003-add-tcpcca-default-and-apply.patch"
           sync_file "$LEDE/package/network/config/firewall4/patches/007-fix-ipv6-masquerade-fullcone-argument.patch"      "patches/firewall4/patches/007-fix-ipv6-masquerade-fullcone-argument.patch"
+          # 009-accept-kernel-releases-without-patchlevel.patch 不同步：官方 25.12 起的 firewall4 已有同样的修复，
+          # 24.10 的 6.6 内核版本号总带补丁号
           sync_file "$LEDE/package/network/utils/iptables/patches/900-bcm-fullconenat.patch"                              "patches/iptables/patches/900-bcm-fullconenat.patch"
           sync_file "$LEDE/package/libs/libnftnl/patches/001-libnftnl-add-fullcone-expression-support.patch"              "patches/libnftnl/patches/001-libnftnl-add-fullcone-expression-support.patch"
           sync_file "$LEDE/package/libs/libnftnl/patches/002-libnftnl-add-masquerade-fullcone-flag.patch"                 "patches/libnftnl/patches/002-libnftnl-add-masquerade-fullcone-flag.patch"

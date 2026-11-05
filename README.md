@@ -8,7 +8,7 @@
 
 > **如果只需要全锥形 NAT 功能而不需要 turboacc 的其他加速引擎**，可以使用独立项目 **[openwrt-sonic-fullcone](https://github.com/mufeng05/openwrt-sonic-fullcone)**。该项目基于 SONiC 的 fullcone NAT 内核补丁，支持 fw3/fw4 双防火墙、per-zone 和 per-protocol 粒度控制、LuCI Web 界面配置，且无需额外内核模块。
 
-最近一次测试：2026-11-03 用 x86_64 平台的 snapshot 版本 OpenWrt（r0-5700101，Linux 6.18.55）分别编译了 fw3(iptables) 和 fw4(nftables) 固件，在 QEMU 中实测设置页面（含在页面上保存并应用）、全锥形 NAT1 的各模式、软件流量卸载、Fast Classifier（fw3）、TCP 拥塞控制算法和从旧版升级的设置迁移均正常，尚未在真机上测试
+最近一次测试：2026-11-05 用 x86_64 平台的 snapshot 版本 OpenWrt（r0-5c5a157，Linux 6.18.60）分别编译了 fw3(iptables) 和 fw4(nftables) 固件，在 QEMU 中实测设置页面（含在页面上保存并应用）、全锥形 NAT1 的各模式、软件流量卸载、硬件加速协议（在虚拟机中模拟支持硬件卸载的设备）、Fast Classifier（fw3）、TCP 拥塞控制算法和从旧版升级的设置迁移均正常，尚未在真机上测试
 
 ## 使用方法
 
@@ -34,10 +34,12 @@ lede 移除 luci-app-turboacc 之后，把全锥形 NAT1、TCP 拥塞控制算�
 
 + 页面顶部：当前的 NAT1 状态和 TCP 拥塞控制算法
 + 常规设置：启用 FullCone NAT（`FULLCONENAT` / `Broadcom Fullcone NAT1`）、TCP 拥塞控制算法、启用 FullCone NAT6（仅 fw4）
-+ 路由/NAT 卸载：流量卸载类型（软件流量卸载、硬件流量卸载，设备支持时还有 MediaTek HNAT、Qualcomm NSS ECM）
++ 路由/NAT 卸载：流量卸载类型（软件流量卸载、硬件流量卸载，设备支持时还有 MediaTek HNAT、Qualcomm NSS ECM）；fw4 下选择硬件流量卸载时，还可以选择硬件加速协议（IPv4+v6 或仅 IPv4）
 + Shortcut-FE：Fast classifier / SFE connection manager、桥接加速、IPv6 加速。lede 已不再提供这部分，这里保留的是 lede 最后一版 turboacc 的设置，只在流量卸载类型为“无”时可用
 
-前三部分与 lede 一样直接保存在防火墙配置中（`/etc/config/firewall` 的 `defaults` 节：`fullcone`、`fullcone6`、`tcpcca`、`flow_offloading`、`flow_offloading_hw`），Shortcut-FE 的设置保存在 `/etc/config/turboacc`。TCP 拥塞控制算法在 fw4 下由防火墙应用（lede 的 firewall4 补丁），在 fw3 下由 turboacc 应用。首次安装时，固件中有相应模块的话，默认开启兼容模式全锥、软件流量卸载和 BBR；从旧版升级时会自动迁移原来的设置。
+前三部分与 lede 一样直接保存在防火墙配置中（`/etc/config/firewall` 的 `defaults` 节：`fullcone`、`fullcone6`、`tcpcca`、`flow_offloading`、`flow_offloading_hw`、`flow_offloading_hw_ipv6`），Shortcut-FE 的设置保存在 `/etc/config/turboacc`。TCP 拥塞控制算法在 fw4 下由防火墙应用（lede 的 firewall4 补丁），在 fw3 下由 turboacc 应用。首次安装时，固件中有相应模块的话，默认开启兼容模式全锥和软件流量卸载，TCP 拥塞控制算法与 lede 一样默认为 cubic，可在页面上改为 BBR；从旧版升级时会自动迁移原来的设置。
+
+硬件加速协议和 MediaTek HNAT 这两项在公开的 lede 中只有页面，后端由本仓库的 firewall4 补丁（`custom/patches/firewall4/patches/100-*.patch`）按 lede 当前固件（QWRT）的做法实现：选择“IPv4 加速”时，只有 IPv4 连接会被卸载，IPv6 走普通转发，硬件卸载不可用时这一项不起作用；选择 MediaTek HNAT 时不建立流量表，由防火墙启动脚本打开 HNAT。
 
 ## 注意
 

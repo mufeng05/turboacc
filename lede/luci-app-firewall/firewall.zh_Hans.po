@@ -28,6 +28,15 @@ msgstr "基于硬件的流量卸载，可能支持 NAT。"
 msgid "Hardware flow offloading"
 msgstr "硬件流量卸载"
 
+msgid "Hardware offloading protocols"
+msgstr "硬件加速协议"
+
+msgid "IPv4 acceleration"
+msgstr "IPv4加速"
+
+msgid "IPv4+v6 acceleration"
+msgstr "IPv4+v6加速"
+
 msgid "MediaTek HNAT"
 msgstr "MediaTek HNAT"
 

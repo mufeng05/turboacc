@@ -1,18 +1,18 @@
 msgid ""
 msgstr ""
-"Content-Type: text/plain; charset=UTF-8\n"
 "Project-Id-Version: PACKAGE VERSION\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "Language: zh-Hans\n"
 "MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:116
 msgid "Automatically select the acceleration engine in ECM Auto mode."
 msgstr "在 ECM Auto 模式下自动选择加速引擎。"
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:165
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:175
 msgid "Bridge Acceleration"
 msgstr "桥接加速"
 
@@ -21,14 +21,14 @@ msgstr "桥接加速"
 msgid "Broadcom Fullcone NAT1"
 msgstr "Broadcom Fullcone NAT1"
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:147
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:157
 msgid ""
 "Cannot be used together with flow offloading, only available when the flow "
 "offloading type is None."
 msgstr "不能与流量卸载同时使用，仅在流量卸载类型为“无”时可用。"
 
 #: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:85
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:153
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:163
 msgid "Disable"
 msgstr "禁用"
 
@@ -44,11 +44,11 @@ msgstr "启用 FullCone NAT"
 msgid "Enable FullCone NAT6"
 msgstr "启用 FullCone NAT6"
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:173
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:183
 msgid "Enable IPv6 Acceleration."
 msgstr "启用 IPv6 加速。"
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:166
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:176
 msgid ""
 "Enable bridge acceleration (may be functional conflict with bridge-mode VPN "
 "server)."
@@ -58,15 +58,15 @@ msgstr "启用桥接加速（可能会与桥接模式的 VPN 服务器冲突）�
 msgid "FULLCONENAT"
 msgstr ""
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:155
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:165
 msgid "Fast classifier"
 msgstr "Fast classifier"
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:156
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:166
 msgid "Fast classifier connection manager for the shortcut forwarding engine."
 msgstr "快速转发引擎（SFE）的 fast classifier 连接管理器。"
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:152
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:162
 msgid "Fastpath engine"
 msgstr "快速转发引擎"
 
@@ -95,7 +95,19 @@ msgstr "基于硬件的流量卸载，可能支持 NAT。"
 msgid "Hardware flow offloading"
 msgstr "硬件流量卸载"
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:172
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:143
+msgid "Hardware offloading protocols"
+msgstr "硬件加速协议"
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:145
+msgid "IPv4 acceleration"
+msgstr "IPv4加速"
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:144
+msgid "IPv4+v6 acceleration"
+msgstr "IPv4+v6加速"
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:182
 msgid "IPv6 acceleration"
 msgstr "IPv6 加速"
 
@@ -131,15 +143,15 @@ msgstr "路由/NAT 卸载"
 msgid "Running status: %s, TCP congestion control algorithm is %s"
 msgstr "当前NAT1状态：%s，TCP 拥塞控制算法为 %s"
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:158
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:168
 msgid "SFE connection manager"
 msgstr "SFE connection manager"
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:146
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:156
 msgid "Shortcut-FE"
 msgstr ""
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:159
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:169
 msgid "Simple connection manager for the shortcut forwarding engine."
 msgstr "快速转发引擎（SFE）的简单连接管理器。"
 

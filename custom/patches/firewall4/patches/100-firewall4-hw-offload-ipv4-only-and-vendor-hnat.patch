@@ -1,0 +1,82 @@
+Subject: [PATCH] firewall4: IPv4 only hardware offloading and MediaTek vendor HNAT
+
+lede's firewall page offers two flow offloading settings that firewall4
+does not know:
+
+- flow_offloading_hw_ipv6 ("Hardware offloading protocols"), default 1.
+  When it is 0 and hardware flow offloading is in use, only IPv4 flows
+  are offloaded and IPv6 traffic takes the normal forwarding path.
+- flow_offloading 3, which selects the MediaTek vendor HNAT. It does not
+  use a flowtable, so treat it as no flow offloading, and switch the HNAT
+  hook on firewall start, restart and reload instead.
+
+Written for mufeng05/turboacc to work the same way as lede's current
+firmware.
+---
+--- a/root/etc/init.d/firewall
++++ b/root/etc/init.d/firewall
+@@ -16,9 +16,23 @@ apply_tcpcca_section() {
+ 	esac
+ }
+ 
++# flow_offloading 3 selects the MediaTek vendor HNAT, switch its hook to match
++apply_hnat_section() {
++	local hook=/sys/kernel/debug/hnat/hook_toggle offload
++
++	[ -w "$hook" ] || return 0
++	config_get offload "$1" flow_offloading 0
++	if [ "$offload" = 3 ]; then
++		echo 1 > "$hook"
++	else
++		echo 0 > "$hook"
++	fi
++}
++
+ apply_tcpcca() {
+ 	config_load firewall
+ 	config_foreach apply_tcpcca_section defaults
++	config_foreach apply_hnat_section defaults
+ }
+ 
+ service_triggers() {
+--- a/root/usr/share/firewall4/templates/ruleset.uc
++++ b/root/usr/share/firewall4/templates/ruleset.uc
+@@ -1,5 +1,8 @@
+ {%
+ 	let flowtable_devices = fw4.resolve_offload_devices();
++	/* flow_offloading_hw_ipv6 0: while hardware offloading is in use, offload IPv4 flows only */
++	let offload_match = (fw4.default_option("flow_offloading_hw") && !fw4.default_option("flow_offloading_hw_ipv6"))
++		? "meta nfproto ipv4 " : "";
+ 	let available_helpers = filter(fw4.helpers(), h => h.available);
+ 	let defined_ipsets = fw4.ipsets();
+ 	let zones_with_limits = filter(fw4.zones(), z => z.log_limit);
+@@ -138,7 +141,7 @@ table inet fw4 {
+ 		type filter hook forward priority filter; policy {{ fw4.forward_policy(true) }};
+ 
+ {% if (length(flowtable_devices) > 0): %}
+-		meta l4proto { tcp, udp } flow offload @ft;
++		{{ offload_match }}meta l4proto { tcp, udp } flow offload @ft;
+ {% endif %}
+ {% fw4.includes('chain-prepend', 'forward') %}
+ 		ct state vmap { established : accept, related : accept{% if (fw4.default_option("drop_invalid")): %}, invalid : drop{% endif %} } comment "!fw4: Handle forwarded flows"
+--- a/root/usr/share/ucode/fw4.uc
++++ b/root/usr/share/ucode/fw4.uc
+@@ -2083,6 +2083,10 @@ return {
+ 			return;
+ 		}
+ 
++		/* flow_offloading 3 selects the MediaTek vendor HNAT, which works without a flowtable */
++		if (data.flow_offloading == "3")
++			data.flow_offloading = data.flow_offloading_hw = "0";
++
+ 		let defs = this.parse_options(data, {
+ 			fullcone: [ "int", "0" ],
+ 			fullcone6: [ "bool", "0" ],
+@@ -2111,6 +2115,7 @@ return {
+ 			disable_ipv6: [ "bool", null, UNSUPPORTED ],
+ 			flow_offloading: [ "bool", "0" ],
+ 			flow_offloading_hw: [ "bool", "0" ],
++			flow_offloading_hw_ipv6: [ "bool", "1" ],
+ 
+ 			tcpcca: [ "string", "cubic" ],
+ 			auto_includes: [ "bool", "1" ]

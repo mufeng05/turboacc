@@ -5,7 +5,7 @@ msgstr "Content-Type: text/plain; charset=UTF-8"
 msgid "Automatically select the acceleration engine in ECM Auto mode."
 msgstr ""
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:165
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:175
 msgid "Bridge Acceleration"
 msgstr ""
 
@@ -14,14 +14,14 @@ msgstr ""
 msgid "Broadcom Fullcone NAT1"
 msgstr ""
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:147
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:157
 msgid ""
 "Cannot be used together with flow offloading, only available when the flow "
 "offloading type is None."
 msgstr ""
 
 #: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:85
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:153
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:163
 msgid "Disable"
 msgstr ""
 
@@ -37,11 +37,11 @@ msgstr ""
 msgid "Enable FullCone NAT6"
 msgstr ""
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:173
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:183
 msgid "Enable IPv6 Acceleration."
 msgstr ""
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:166
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:176
 msgid ""
 "Enable bridge acceleration (may be functional conflict with bridge-mode VPN "
 "server)."
@@ -51,15 +51,15 @@ msgstr ""
 msgid "FULLCONENAT"
 msgstr ""
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:155
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:165
 msgid "Fast classifier"
 msgstr ""
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:156
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:166
 msgid "Fast classifier connection manager for the shortcut forwarding engine."
 msgstr ""
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:152
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:162
 msgid "Fastpath engine"
 msgstr ""
 
@@ -88,7 +88,19 @@ msgstr ""
 msgid "Hardware flow offloading"
 msgstr ""
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:172
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:143
+msgid "Hardware offloading protocols"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:145
+msgid "IPv4 acceleration"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:144
+msgid "IPv4+v6 acceleration"
+msgstr ""
+
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:182
 msgid "IPv6 acceleration"
 msgstr ""
 
@@ -124,15 +136,15 @@ msgstr ""
 msgid "Running status: %s, TCP congestion control algorithm is %s"
 msgstr ""
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:158
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:168
 msgid "SFE connection manager"
 msgstr ""
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:146
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:156
 msgid "Shortcut-FE"
 msgstr ""
 
-#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:159
+#: applications/luci-app-turboacc/htdocs/luci-static/resources/view/turboacc.js:169
 msgid "Simple connection manager for the shortcut forwarding engine."
 msgstr ""
 

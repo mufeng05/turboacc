@@ -14,7 +14,7 @@ Supported kernel versions: **6.6**, **6.12**, **6.18**.
 
 > **If you only need fullcone NAT and not the other turboacc acceleration engines**, take a look at the standalone project **[openwrt-sonic-fullcone](https://github.com/mufeng05/openwrt-sonic-fullcone)**. It is built on SONiC's fullcone NAT kernel patches, supports both fw3 and fw4, offers per-zone and per-protocol granularity, comes with a LuCI web UI, and does not require any extra kernel modules.
 
-Last tested on 2026-11-03: fw3 (iptables) and fw4 (nftables) firmware built from the x86_64 OpenWrt snapshot (r0-5700101, Linux 6.18.55) passed in QEMU, covering the settings page (including saving and applying from the page), every fullcone NAT1 mode, software flow offloading, Fast Classifier (fw3), the TCP congestion control setting and the migration of settings from older versions. It has not been tested on real hardware yet.
+Last tested on 2026-11-05: fw3 (iptables) and fw4 (nftables) firmware built from the x86_64 OpenWrt snapshot (r0-5c5a157, Linux 6.18.60) passed in QEMU, covering the settings page (including saving and applying from the page), every fullcone NAT1 mode, software flow offloading, the hardware offloading protocols (on a VM made to report hardware offloading support), Fast Classifier (fw3), the TCP congestion control setting and the migration of settings from older versions. It has not been tested on real hardware yet.
 
 ## Usage
 
@@ -40,10 +40,12 @@ After lede removed `luci-app-turboacc`, it moved the fullcone NAT1, TCP congesti
 
 - At the top: the current NAT1 status and TCP congestion control algorithm
 - General Settings: Enable FullCone NAT (`FULLCONENAT` / `Broadcom Fullcone NAT1`), TCP CCA, Enable FullCone NAT6 (fw4 only)
-- Routing/NAT Offloading: flow offloading type (software or hardware flow offloading, plus MediaTek HNAT and Qualcomm NSS ECM on devices that have them)
+- Routing/NAT Offloading: flow offloading type (software or hardware flow offloading, plus MediaTek HNAT and Qualcomm NSS ECM on devices that have them); with hardware flow offloading on fw4, also the hardware offloading protocols (IPv4+v6 or IPv4 only)
 - Shortcut-FE: Fast classifier / SFE connection manager, bridge acceleration, IPv6 acceleration. lede no longer offers this part; it is kept from lede's last turboacc version and is only available when the flow offloading type is None
 
-As in lede, the first three parts are stored directly in the firewall config (the `defaults` section of `/etc/config/firewall`: `fullcone`, `fullcone6`, `tcpcca`, `flow_offloading`, `flow_offloading_hw`), while the Shortcut-FE settings are stored in `/etc/config/turboacc`. The TCP congestion control algorithm is applied by the firewall on fw4 (a lede firewall4 patch) and by turboacc on fw3. On a fresh install, compatible fullcone NAT, software flow offloading and BBR are enabled by default when the firmware has the modules for them; upgrading from an older version migrates the existing settings automatically.
+As in lede, the first three parts are stored directly in the firewall config (the `defaults` section of `/etc/config/firewall`: `fullcone`, `fullcone6`, `tcpcca`, `flow_offloading`, `flow_offloading_hw`, `flow_offloading_hw_ipv6`), while the Shortcut-FE settings are stored in `/etc/config/turboacc`. The TCP congestion control algorithm is applied by the firewall on fw4 (a lede firewall4 patch) and by turboacc on fw3. On a fresh install, compatible fullcone NAT and software flow offloading are enabled by default when the firmware has the modules for them, and the TCP congestion control algorithm defaults to cubic as in lede (BBR can be chosen on the page); upgrading from an older version migrates the existing settings automatically.
+
+In public lede, the hardware offloading protocols and MediaTek HNAT exist only on the page. This repository's firewall4 patch (`custom/patches/firewall4/patches/100-*.patch`) implements them the way lede's current firmware (QWRT) does: with "IPv4 acceleration", only IPv4 flows are offloaded and IPv6 takes the normal forwarding path, and the setting has no effect when hardware offloading is unavailable; with MediaTek HNAT, no flowtable is set up and the firewall init script switches HNAT on.
 
 ## Notes
 

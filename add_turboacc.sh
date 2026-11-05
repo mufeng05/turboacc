@@ -204,6 +204,7 @@ cp -f "$TMPDIR/turboacc/custom/fullconenat/Makefile" "./package/turboacc/fullcon
 cp -f "$TMPDIR/turboacc/custom/fullconenat-nft/Makefile" "./package/turboacc/fullconenat-nft/"
 
 cp -f "$TMPDIR/turboacc/custom/patches/iptables/patches/900-bcm-fullconenat.patch" "./package/network/utils/iptables/patches/"
+cp -f "$TMPDIR/turboacc/custom/patches/firewall4/patches/"*.patch "./package/network/config/firewall4/patches/"
 cp -f "$TMPDIR/turboacc/custom/shortcut-fe/fast-classifier/patches/001-fix-build.patch" "./package/turboacc/shortcut-fe/fast-classifier/patches/"
 
 # Newer firewall4, nftables and libnftnl no longer accept some lede patches, use the rebased ones instead
