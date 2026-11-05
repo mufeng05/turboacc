@@ -8,6 +8,7 @@ package/network/config/firewall4/patches/003-add-tcpcca-default-and-apply.patch
 package/network/config/firewall4/patches/005-notrack-lan-ssdp-discovery.patch
 package/network/config/firewall4/patches/006-notrack-lan-wsd-discovery.patch
 package/network/config/firewall4/patches/007-fix-ipv6-masquerade-fullcone-argument.patch
+package/network/config/firewall4/patches/009-accept-kernel-releases-without-patchlevel.patch
 package/network/utils/iptables/patches/900-bcm-fullconenat.patch
 package/network/utils/nftables/patches/100-nftables-add-fullcone-expression-support.patch
 package/network/utils/nftables/patches/103-nftables-add-masquerade-fullcone-flag.patch
@@ -28,6 +29,14 @@ target/linux/generic/hack-6.6/953-net-patch-linux-kernel-to-support-shortcut-fe.
 target/linux/generic/hack-6.6/982-add-bcm-fullconenat-support.patch
 target/linux/generic/hack-6.6/983-add-bcm-fullconenat-to-nft.patch
 target/linux/generic/hack-6.6/985-netfilter-bcm-fullcone-reserve-expectation-early.patch
+target/linux/generic/hack-7.3/952-add-net-conntrack-events-support-multiple-registrant.patch
+target/linux/generic/hack-7.3/953-net-patch-linux-kernel-to-support-shortcut-fe.patch
+target/linux/generic/hack-7.3/982-add-bcm-fullconenat-support.patch
+target/linux/generic/hack-7.3/983-add-bcm-fullconenat-to-nft.patch
+target/linux/generic/hack-7.3/984-netfilter-reserve-unconfirmed-nat-tuples.patch
+target/linux/generic/hack-7.3/985-netfilter-bcm-fullcone-reserve-expectation-early.patch
+target/linux/generic/hack-7.3/986-netfilter-bcm-fullcone-adapt-helper-lifetime.patch
 target/linux/generic/pending-6.12/613-netfilter_optional_tcp_window_check.patch
 target/linux/generic/pending-6.18/613-netfilter_optional_tcp_window_check.patch
 target/linux/generic/pending-6.6/613-netfilter_optional_tcp_window_check.patch
+target/linux/generic/pending-7.3/613-netfilter_optional_tcp_window_check.patch
