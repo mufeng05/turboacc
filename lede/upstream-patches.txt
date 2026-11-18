@@ -9,6 +9,9 @@ package/network/config/firewall4/patches/005-notrack-lan-ssdp-discovery.patch
 package/network/config/firewall4/patches/006-notrack-lan-wsd-discovery.patch
 package/network/config/firewall4/patches/007-fix-ipv6-masquerade-fullcone-argument.patch
 package/network/config/firewall4/patches/009-accept-kernel-releases-without-patchlevel.patch
+package/network/config/firewall4/patches/sr1010/010-resolve-macvlan-lower-device.patch
+package/network/config/firewall4/patches/sr1010/020-unicast-flow-offload-only.patch
+package/network/config/firewall4/patches/sr1010/030-probe-hardware-offload-per-device.patch
 package/network/utils/iptables/patches/900-bcm-fullconenat.patch
 package/network/utils/nftables/patches/100-nftables-add-fullcone-expression-support.patch
 package/network/utils/nftables/patches/103-nftables-add-masquerade-fullcone-flag.patch
