@@ -1,4 +1,9 @@
-function has_supported_hw_offloading_target(target) {
+function has_supported_hw_offloading_target(target, board) {
+	if (target == 'zte/zx279133' && board == 'zte,zx279133-sr1010')
+		return access('/sys/module/npu') == true &&
+			access('/sys/module/fnoffload') == true &&
+			length(glob('/sys/bus/platform/drivers/zx279133-eth/*/driver')) > 0;
+
 	if (target == 'ipq40xx/generic')
 		return access('/sys/module/qca_ssdk') == true &&
 			access('/sys/module/essedma') == true;
@@ -13,7 +18,7 @@ function has_supported_hw_offloading_target(target) {
 			const has_mt7621_vendor_hnat = sysboard?.release?.target == 'ramips/mt7621' &&
 				access('/sys/module/mtkhnat') == true;
 			const has_hw_offloading = !has_mt7621_vendor_hnat &&
-				has_supported_hw_offloading_target(sysboard?.release?.target) &&
+				has_supported_hw_offloading_target(sysboard?.release?.target, sysboard?.board_name) &&
 				((has_fw3 && has_ipt_flowoffload) || (has_fw4 && has_nft_flowoffload));
 				offloading: (has_fw3 && has_ipt_flowoffload) || (has_fw4 && has_nft_flowoffload),
 				offloading_hw: has_hw_offloading,
